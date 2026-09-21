@@ -3,9 +3,10 @@
 // Requires ANTHROPIC_API_KEY (server-side).
 
 import Anthropic from "@anthropic-ai/sdk";
-import type { TransferEvent, Verdict } from "./types";
+import type { Standard, TransferEvent, Verdict } from "./types";
+import { SPECS } from "./standards";
 
-const MODEL = "claude-opus-4-8";
+const MODEL = "claude-haiku-4-5";
 
 const VERDICT_SCHEMA = {
   type: "object",
@@ -20,12 +21,20 @@ const VERDICT_SCHEMA = {
   additionalProperties: false,
 } as const;
 
-const SYSTEM = `You are the TrustLens Watchtower. Classify a single on-chain event on an ERC-20 token by \
-how much it threatens holder trust, then write a short human alert. Owner/mint/pause/fee/blacklist \
-changes and large treasury movements matter most. Calm and specific — no alarmism, no false reassurance.`;
+function buildSystem(standard: Standard, chainName: string): string {
+  const nft = standard !== "erc20";
+  return `You are the TrustLens Watchtower. Classify a single on-chain event on a ${SPECS[standard].label} \
+on ${chainName} by how much it threatens holder trust, then write a short human alert. \
+${nft
+    ? "Mint/reveal of new NFTs, metadata/royalty changes, and high-value token transfers matter most."
+    : "Owner/mint/pause/fee/blacklist changes and large treasury movements matter most."} \
+Calm and specific — no alarmism, no false reassurance.`;
+}
 
 export async function classifyEvent(
   event: TransferEvent,
+  standard: Standard,
+  chainName: string,
   supply?: number | null,
 ): Promise<Verdict> {
   const client = new Anthropic();
@@ -34,7 +43,7 @@ export async function classifyEvent(
   const resp = await client.messages.create({
     model: MODEL,
     max_tokens: 1024,
-    system: SYSTEM,
+    system: buildSystem(standard, chainName),
     messages: [
       {
         role: "user",

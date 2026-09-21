@@ -1,13 +1,30 @@
 // Shared types for TrustLens.
 
+// Token standards TrustLens can detect and analyze.
+export type Standard = "erc20" | "erc721" | "erc1155";
+
+// Display-only slice of a chain's config. This is what crosses into the browser
+// via AnalyzeResult — the RPC endpoint list stays server-side (see lib/chains.ts).
+export interface ChainInfo {
+  id: number; // EVM chain id (e.g. 137 = Polygon)
+  name: string; // "Polygon PoS"
+  shortName: string; // "Polygon"
+  explorer: string; // "https://polygonscan.com"
+  nativeSymbol: string; // "POL" / "ETH" / "BNB"
+}
+
 export interface Facts {
   contract: string;
-  chain: string;
+  chain: ChainInfo;
+  standard: Standard;
   name: string | null;
   symbol: string | null;
-  decimals: number | null;
-  total_supply_raw: string | null; // string, not bigint, so it JSON-serializes
-  total_supply: number | null; // integer part, for display / AI context
+  // ERC-20-specific (undefined/null for NFTs).
+  decimals?: number | null;
+  total_supply_raw?: string | null; // string, not bigint, so it JSON-serializes
+  total_supply?: number | null; // integer part, for display / AI context
+  // ERC-721 / ERC-1155 metadata probe (a sampled tokenURI/uri), when available.
+  token_uri_sample?: string | null;
   owner: string;
   owner_kind: string;
   paused: boolean;
@@ -24,6 +41,7 @@ export interface Powers {
   has_fee_hint: boolean;
   has_blacklist: boolean;
   has_accesscontrol: boolean;
+  has_metadata_mutable: boolean; // NFT: setBaseURI/setURI/setTokenURI present
   is_proxy: boolean;
   owner_renounced: boolean;
   pause_callable: boolean | null; // null = role-gated / indeterminate without source
@@ -52,10 +70,12 @@ export interface Assessment {
 }
 
 export interface TransferEvent {
-  type: "Transfer";
+  type: "Transfer" | "TransferSingle" | "TransferBatch";
+  kind: Standard;
   from: string;
   to: string;
-  amount: number;
+  amount?: number; // fungible value (erc20) or unit count (erc1155)
+  tokenId?: string; // string to survive JSON + very large ids (erc721/erc1155)
   block: number;
   tx: string | null;
 }
@@ -77,4 +97,5 @@ export interface AnalyzeResult {
   alerts: Verdict[] | null;
   aiError: string | null;
   hasKey: boolean;
+  alsoFoundOn?: ChainInfo[]; // same address recognized on other chains
 }

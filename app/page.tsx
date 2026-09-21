@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from "react";
 import type { AnalyzeResult, Facts, Powers, Verdict } from "@/lib/types";
 
-const SUT = "0x98965474ecbec2f532f1f780ee37b0b05f77ca55";
+const DEMO_ADDRESS = "0x98965474ecbec2f532f1f780ee37b0b05f77ca55";
 const SEV_CLASS: Record<string, string> = { critical: "bad", high: "warn", medium: "warn", info: "ok" };
 
 export default function Home() {
@@ -42,7 +42,7 @@ function Header() {
 
 /* ---------------- hero + analyzer ---------------- */
 function Hero() {
-  const [address, setAddress] = useState(SUT);
+  const [address, setAddress] = useState(DEMO_ADDRESS);
   const [source, setSource] = useState("");
   const [showSource, setShowSource] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -81,7 +81,29 @@ function Hero() {
         </p>
 
         <div className="analyzer">
-          <p className="label">Paste any ERC-20 contract address on Polygon</p>
+          <p className="label">
+            Paste any{" "}
+            <Tip term="token contract">
+              <b>Token standards</b> define the rules a token contract follows, so wallets and apps can
+              work with any token the same way. TrustLens detects three:
+              <br />• <b>ERC-20</b> — fungible tokens (every token identical in type and value; functions
+              like <code>totalSupply</code>, <code>transfer</code>)
+              <br />• <b>ERC-721</b> — NFTs (each token unique, with its own id and metadata)
+              <br />• <b>ERC-1155</b> — multi-tokens (one contract, many fungible and non-fungible ids)
+              <span className="tip-src">
+                Source:{" "}
+                <a
+                  href="https://www.investopedia.com/news/what-erc20-and-what-does-it-mean-ethereum/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Investopedia — ERC-20
+                </a>
+              </span>
+            </Tip>{" "}
+            address — TrustLens auto-detects the chain (Polygon, Ethereum, Base, Arbitrum, Optimism, BNB
+            Chain) and the standard (ERC-20 / 721 / 1155).
+          </p>
           <div className="bar">
             <input
               className="input"
@@ -109,14 +131,14 @@ function Hero() {
           )}
           {error && <p className="err">⚠ {error}</p>}
           {loading && (
-            <div className="loading"><span className="spinner" /> Reading the chain and running the AI auditor… (≈20–40s with AI)</div>
+            <div className="loading"><span className="spinner" /> Detecting the chain and standard, reading the chain, running the AI auditor… (≈20–45s with AI)</div>
           )}
           {data && <Results data={data} />}
         </div>
 
         <div className="hero-chips">
           <span className="chip"><span className="dot" /> Live on-chain reads</span>
-          <span className="chip">⚡ Polygon PoS</span>
+          <span className="chip">⚡ 6 chains, auto-detected</span>
           <span className="chip">✦ Powered by Claude</span>
           <span className="chip">🔒 No wallet, no signup</span>
         </div>
@@ -140,8 +162,9 @@ const RECON_META: Record<string, { label: string; cls: string }> = {
 };
 
 function Results({ data }: { data: AnalyzeResult }) {
-  const { facts, powers, assessment, alerts, report, aiError, hasKey } = data;
+  const { facts, powers, assessment, alerts, report, aiError, hasKey, alsoFoundOn } = data;
   const meta = STATUS_META[assessment.status] ?? STATUS_META.unresolved;
+  const stdLabel = facts.standard.replace("erc", "ERC-");
   return (
     <div className="results">
       <div className={`verdict ${meta.cls}`}>
@@ -149,10 +172,18 @@ function Results({ data }: { data: AnalyzeResult }) {
         <span>
           <div className="vt">{assessment.headline}</div>
           <div className="vs">
-            {facts.name} ({facts.symbol}) · {short(facts.contract)} · computed on-chain
+            {facts.name ?? "Unknown"} {facts.symbol ? `(${facts.symbol})` : ""} · {stdLabel} on{" "}
+            {facts.chain.shortName} · {short(facts.contract)} · computed on-chain
           </div>
         </span>
       </div>
+
+      {alsoFoundOn && alsoFoundOn.length > 0 && (
+        <p className="mut" style={{ margin: "10px 2px 0", fontSize: 13 }}>
+          ⛓ Also found on: {alsoFoundOn.map((c) => c.shortName).join(", ")} — this report covers{" "}
+          {facts.chain.shortName}.
+        </p>
+      )}
 
       <ReconCard assessment={assessment} />
 
@@ -210,23 +241,44 @@ function ReconCard({ assessment }: { assessment: AnalyzeResult["assessment"] }) 
 
 function FactsCard({ facts, powers }: { facts: Facts; powers: Powers }) {
   const ownerOk = facts.owner.endsWith("0".repeat(40));
-  const supply = facts.total_supply !== null ? `${facts.total_supply.toLocaleString()} ${facts.symbol ?? ""}` : "—";
   const detected = powers.present.length ? powers.present.join(", ") : "none detected";
+  const isErc20 = facts.standard === "erc20";
+  const supply =
+    isErc20 && facts.total_supply != null
+      ? `${facts.total_supply.toLocaleString()} ${facts.symbol ?? ""}`
+      : null;
   const rows: [string, string, string][] = [
-    ["Token", `${facts.name ?? "?"} · ${facts.decimals ?? "?"} dec`, "v"],
-    ["Total supply", supply, "v"],
+    ["Chain", `${facts.chain.name}`, "v"],
+    ["Standard", facts.standard.replace("erc", "ERC-").toUpperCase(), "v"],
+  ];
+  if (isErc20) {
+    rows.push(
+      ["Decimals", `${facts.decimals ?? "?"}`, "v"],
+      ["Total supply", supply ?? "—", "v"],
+    );
+  } else if (facts.token_uri_sample) {
+    rows.push(["Metadata URI sample", truncate(facts.token_uri_sample, 42), "v"]);
+  }
+  rows.push(
     ["Upgradeable proxy", facts.is_proxy ? "Yes — code can change" : "No — immutable", facts.is_proxy ? "bad" : "ok"],
     ["Active admin owner", facts.owner_kind, ownerOk ? "ok" : "warn"],
     ["Privileged surfaces", detected, powers.present.filter((p) => p !== "pause").length ? "warn" : "ok"],
     ["Paused", facts.paused ? "Yes — transfers halted" : "No", facts.paused ? "bad" : "ok"],
-  ];
+  );
   return (
     <div className="card">
       <h3>Verified on-chain</h3>
       {rows.map(([k, v, cls]) => (
         <div className="row" key={k}><span className="k">{k}</span><span className={`v ${cls}`}>{v}</span></div>
       ))}
-      <div className="row"><span className="k">Contract</span><span className="v"><code>{short(facts.contract)}</code></span></div>
+      <div className="row">
+        <span className="k">Contract</span>
+        <span className="v">
+          <a href={`${facts.chain.explorer}/token/${facts.contract}`} target="_blank" rel="noopener noreferrer" style={{ color: "var(--acc)" }}>
+            <code>{short(facts.contract)} ↗</code>
+          </a>
+        </span>
+      </div>
     </div>
   );
 }
@@ -286,8 +338,8 @@ function Features() {
 /* ---------------- how it works ---------------- */
 function HowItWorks() {
   const steps = [
-    { h: "Paste an address", p: "Any ERC-20 on Polygon. No wallet connection, no signup, nothing to install." },
-    { h: "We read the chain", p: "TrustLens pulls verified on-chain facts and recent events straight from public RPC — independently checkable by anyone." },
+    { h: "Paste an address", p: "Any token or NFT contract on Polygon, Ethereum, Base, Arbitrum, Optimism, or BNB Chain. No wallet connection, no signup." },
+    { h: "We detect and read the chain", p: "TrustLens auto-detects the chain and standard, then pulls verified on-chain facts and recent events straight from public RPC — independently checkable by anyone." },
     { h: "AI explains the risk", p: "Claude writes a plain-English Trust Report and triages events, cleanly separating verified facts from unverified claims." },
   ];
   return (
@@ -343,6 +395,17 @@ function Footer() {
   );
 }
 
+/* ---------------- tooltip ---------------- */
+// Inline glossary term with a hover/focus tooltip. Focusable and dismissible for a11y.
+function Tip({ term, children }: { term: string; children: ReactNode }) {
+  return (
+    <span className="tip" tabIndex={0} role="button" aria-label={`What is ${term}?`}>
+      {term}
+      <span className="tip-box" role="tooltip">{children}</span>
+    </span>
+  );
+}
+
 /* ---------------- report markdown ---------------- */
 // Renders the constrained Markdown the AI Auditor emits (bold section headers,
 // inline **bold**, `code`, and bullet lists) as real elements — safely, without
@@ -394,4 +457,8 @@ function ReportMarkdown({ text }: { text: string }) {
 /* ---------------- utils ---------------- */
 function short(addr: string) {
   return addr && addr.length > 12 ? `${addr.slice(0, 6)}…${addr.slice(-4)}` : addr;
+}
+
+function truncate(s: string, n: number) {
+  return s.length > n ? `${s.slice(0, n - 1)}…` : s;
 }
