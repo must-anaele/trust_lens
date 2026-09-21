@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import type { AnalyzeResult, Facts, Powers, Verdict } from "@/lib/types";
 
 const SUT = "0x98965474ecbec2f532f1f780ee37b0b05f77ca55";
@@ -164,7 +164,7 @@ function Results({ data }: { data: AnalyzeResult }) {
       {report && (
         <div className="card report" style={{ marginTop: 16 }}>
           <h3>AI Trust Report</h3>
-          <pre>{report}</pre>
+          <ReportMarkdown text={report} />
         </div>
       )}
       {!report && hasKey && aiError && (
@@ -341,6 +341,54 @@ function Footer() {
       </div>
     </footer>
   );
+}
+
+/* ---------------- report markdown ---------------- */
+// Renders the constrained Markdown the AI Auditor emits (bold section headers,
+// inline **bold**, `code`, and bullet lists) as real elements — safely, without
+// dangerouslySetInnerHTML (React escapes all text nodes).
+function renderInline(text: string): ReactNode[] {
+  const nodes: ReactNode[] = [];
+  const re = /\*\*(.+?)\*\*|`([^`]+?)`/g;
+  let last = 0;
+  let key = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) nodes.push(text.slice(last, m.index));
+    if (m[1] !== undefined) nodes.push(<strong key={key++}>{m[1]}</strong>);
+    else nodes.push(<code key={key++}>{m[2]}</code>);
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) nodes.push(text.slice(last));
+  return nodes;
+}
+
+function ReportMarkdown({ text }: { text: string }) {
+  const lines = text.replace(/\r\n/g, "\n").split("\n");
+  const blocks: ReactNode[] = [];
+  let list: string[] = [];
+  let key = 0;
+  const flushList = () => {
+    if (!list.length) return;
+    const items = list;
+    blocks.push(<ul key={key++}>{items.map((li, i) => <li key={i}>{renderInline(li)}</li>)}</ul>);
+    list = [];
+  };
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) { flushList(); continue; }
+    const bullet = line.match(/^[-*•]\s+(.*)$/);
+    if (bullet) { list.push(bullet[1]); continue; }
+    flushList();
+    // A whole-line **bold** (optionally prefixed by "#"s or "N.") is a section header.
+    const boldHead = line.match(/^(?:#{1,4}\s+|\d+\.\s+)?\*\*(.+?)\*\*[:.]?$/);
+    const mdHead = line.match(/^#{1,4}\s+(.*)$/);
+    if (boldHead) blocks.push(<h4 key={key++}>{renderInline(boldHead[1])}</h4>);
+    else if (mdHead) blocks.push(<h4 key={key++}>{renderInline(mdHead[1])}</h4>);
+    else blocks.push(<p key={key++}>{renderInline(line)}</p>);
+  }
+  flushList();
+  return <div className="md">{blocks}</div>;
 }
 
 /* ---------------- utils ---------------- */
