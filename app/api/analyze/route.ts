@@ -12,14 +12,9 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 120; // long enough for the multi-chain probe + AI audit
 
-// Demo fixture: the week-1 SUT token (Polygon). Pre-loaded in the UI input and
-// the only address that carries hand-curated third-party scanner claims.
-const DEMO_ADDRESS = "0x98965474ecbec2f532f1f780ee37b0b05f77ca55";
-const DEMO_CLAIMS = [
-  "GoPlus (via CoinGecko): contract owner can disable sells, mint, and change fees.",
-  "PolygonScan: a 'UI Multiplier' scales displayed balances vs. true balanceOf.",
-  "CoinMarketCap: reported circulating supply differs from on-chain total supply.",
-];
+// No third-party scanner claims ship by default — claims must be per-token
+// fixtures tied to a verified scanner result, never generic. The AI prompt
+// already handles the empty case ("(none)").
 
 export async function POST(req: NextRequest) {
   let address = "";
@@ -68,10 +63,7 @@ export async function POST(req: NextRequest) {
     try {
       const { audit } = await import("@/lib/audit");
       const { classifyEvent } = await import("@/lib/watchtower");
-      // Demo scanner claims apply only to the demo token on Polygon.
-      const claims =
-        address.toLowerCase() === DEMO_ADDRESS && chain.id === 137 ? DEMO_CLAIMS : [];
-      report = await audit(facts, claims, source);
+      report = await audit(facts, [], source);
       alerts = events.length
         ? await Promise.all(
             events.map((e) => classifyEvent(e, standard, chain.name, facts.total_supply ?? null)),

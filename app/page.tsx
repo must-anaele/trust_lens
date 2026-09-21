@@ -3,8 +3,15 @@
 import { useState, type ReactNode } from "react";
 import type { AnalyzeResult, Facts, Powers, Verdict } from "@/lib/types";
 
-const DEMO_ADDRESS = "0x98965474ecbec2f532f1f780ee37b0b05f77ca55";
-const SEV_CLASS: Record<string, string> = { critical: "bad", high: "warn", medium: "warn", info: "ok" };
+// Sensible default to pre-fill the analyzer: DAI on Ethereum — canonical, stable,
+// and demonstrates cross-chain auto-detection (resolves on Ethereum, not Polygon).
+const DEFAULT_ADDRESS = "0x6B175474E89094C44Da98b954EedeAC495271d0F";
+const SEV_CLASS: Record<string, string> = {
+  critical: "bad",
+  high: "warn",
+  medium: "warn",
+  info: "ok",
+};
 
 export default function Home() {
   return (
@@ -31,9 +38,15 @@ function Header() {
           TrustLens
         </div>
         <nav>
-          <a href="#features" className="hide-sm">Features</a>
-          <a href="#how" className="hide-sm">How it works</a>
-          <a href="#analyze" className="btn btn-ghost btn-sm">Analyze a token</a>
+          <a href="#features" className="hide-sm">
+            Features
+          </a>
+          <a href="#how" className="hide-sm">
+            How it works
+          </a>
+          <a href="#analyze" className="btn btn-ghost btn-sm">
+            Analyze a token
+          </a>
         </nav>
       </div>
     </header>
@@ -42,7 +55,7 @@ function Header() {
 
 /* ---------------- hero + analyzer ---------------- */
 function Hero() {
-  const [address, setAddress] = useState(DEMO_ADDRESS);
+  const [address, setAddress] = useState("");
   const [source, setSource] = useState("");
   const [showSource, setShowSource] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -50,15 +63,21 @@ function Hero() {
   const [data, setData] = useState<AnalyzeResult | null>(null);
 
   async function analyze() {
-    setLoading(true); setError(null); setData(null);
+    setLoading(true);
+    setError(null);
+    setData(null);
     try {
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ address: address.trim(), source: source.trim() || undefined }),
+        body: JSON.stringify({
+          address: address.trim(),
+          source: source.trim() || undefined,
+        }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || `Request failed (${res.status})`);
+      if (!res.ok)
+        throw new Error(json.error || `Request failed (${res.status})`);
       setData(json as AnalyzeResult);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -72,24 +91,30 @@ function Hero() {
       <div className="container">
         <span className="eyebrow">◆ On-chain trust, verified by AI</span>
         <h1>
-          Know if a token is <span className="grad">actually trustworthy</span> — in seconds.
+          Know if a token is <span className="grad">actually trustworthy</span>{" "}
+          — in seconds.
         </h1>
         <p className="lede">
-          TrustLens reads the live blockchain and has an AI auditor explain, in plain English, what a
-          token&apos;s contract can really do — and watches it for dangerous moves. Trust becomes a fact
-          you can check, not a claim you have to take on faith.
+          TrustLens reads the live blockchain and has an AI auditor explain, in
+          plain English, what a token&apos;s contract can really do — and
+          watches it for dangerous moves. Trust becomes a fact you can check,
+          not a claim you have to take on faith.
         </p>
 
         <div className="analyzer">
           <p className="label">
             Paste any{" "}
             <Tip term="token contract">
-              <b>Token standards</b> define the rules a token contract follows, so wallets and apps can
-              work with any token the same way. TrustLens detects three:
-              <br />• <b>ERC-20</b> — fungible tokens (every token identical in type and value; functions
-              like <code>totalSupply</code>, <code>transfer</code>)
-              <br />• <b>ERC-721</b> — NFTs (each token unique, with its own id and metadata)
-              <br />• <b>ERC-1155</b> — multi-tokens (one contract, many fungible and non-fungible ids)
+              <b>Token standards</b> define the rules a token contract follows,
+              so wallets and apps can work with any token the same way.
+              TrustLens detects three:
+              <br />• <b>ERC-20</b> — fungible tokens (every token identical in
+              type and value; functions like <code>totalSupply</code>,{" "}
+              <code>transfer</code>)
+              <br />• <b>ERC-721</b> — NFTs (each token unique, with its own id
+              and metadata)
+              <br />• <b>ERC-1155</b> — multi-tokens (one contract, many
+              fungible and non-fungible ids)
               <span className="tip-src">
                 Source:{" "}
                 <a
@@ -101,8 +126,9 @@ function Hero() {
                 </a>
               </span>
             </Tip>{" "}
-            address — TrustLens auto-detects the chain (Polygon, Ethereum, Base, Arbitrum, Optimism, BNB
-            Chain) and the standard (ERC-20 / 721 / 1155).
+            address — TrustLens auto-detects the chain (Polygon, Ethereum, Base,
+            Arbitrum, Optimism, BNB Chain) and the standard (ERC-20 / 721 /
+            1155).
           </p>
           <div className="bar">
             <input
@@ -113,12 +139,18 @@ function Hero() {
               onKeyDown={(e) => e.key === "Enter" && !loading && analyze()}
               placeholder="0x… token contract address"
             />
-            <button className="btn btn-primary" onClick={analyze} disabled={loading}>
+            <button
+              className="btn btn-primary"
+              onClick={analyze}
+              disabled={loading}
+            >
               {loading ? "Analyzing…" : "Verify trust →"}
             </button>
           </div>
           <button className="linkbtn" onClick={() => setShowSource((s) => !s)}>
-            {showSource ? "− Hide verified source" : "+ Paste verified Solidity source (optional, but decisive)"}
+            {showSource
+              ? "− Hide verified source"
+              : "+ Paste verified Solidity source (optional, but decisive)"}
           </button>
           {showSource && (
             <textarea
@@ -131,13 +163,18 @@ function Hero() {
           )}
           {error && <p className="err">⚠ {error}</p>}
           {loading && (
-            <div className="loading"><span className="spinner" /> Detecting the chain and standard, reading the chain, running the AI auditor… (≈20–45s with AI)</div>
+            <div className="loading">
+              <span className="spinner" /> Detecting the chain and standard,
+              reading the chain, running the AI auditor… (≈20–45s with AI)
+            </div>
           )}
           {data && <Results data={data} />}
         </div>
 
         <div className="hero-chips">
-          <span className="chip"><span className="dot" /> Live on-chain reads</span>
+          <span className="chip">
+            <span className="dot" /> Live on-chain reads
+          </span>
           <span className="chip">⚡ 6 chains, auto-detected</span>
           <span className="chip">✦ Powered by Claude</span>
           <span className="chip">🔒 No wallet, no signup</span>
@@ -162,7 +199,16 @@ const RECON_META: Record<string, { label: string; cls: string }> = {
 };
 
 function Results({ data }: { data: AnalyzeResult }) {
-  const { facts, powers, assessment, alerts, report, aiError, hasKey, alsoFoundOn } = data;
+  const {
+    facts,
+    powers,
+    assessment,
+    alerts,
+    report,
+    aiError,
+    hasKey,
+    alsoFoundOn,
+  } = data;
   const meta = STATUS_META[assessment.status] ?? STATUS_META.unresolved;
   const stdLabel = facts.standard.replace("erc", "ERC-");
   return (
@@ -172,16 +218,17 @@ function Results({ data }: { data: AnalyzeResult }) {
         <span>
           <div className="vt">{assessment.headline}</div>
           <div className="vs">
-            {facts.name ?? "Unknown"} {facts.symbol ? `(${facts.symbol})` : ""} · {stdLabel} on{" "}
-            {facts.chain.shortName} · {short(facts.contract)} · computed on-chain
+            {facts.name ?? "Unknown"} {facts.symbol ? `(${facts.symbol})` : ""}{" "}
+            · {stdLabel} on {facts.chain.shortName} · {short(facts.contract)} ·
+            computed on-chain
           </div>
         </span>
       </div>
 
       {alsoFoundOn && alsoFoundOn.length > 0 && (
         <p className="mut" style={{ margin: "10px 2px 0", fontSize: 13 }}>
-          ⛓ Also found on: {alsoFoundOn.map((c) => c.shortName).join(", ")} — this report covers{" "}
-          {facts.chain.shortName}.
+          ⛓ Also found on: {alsoFoundOn.map((c) => c.shortName).join(", ")} —
+          this report covers {facts.chain.shortName}.
         </p>
       )}
 
@@ -189,7 +236,11 @@ function Results({ data }: { data: AnalyzeResult }) {
 
       <div className="grid2">
         <FactsCard facts={facts} powers={powers} />
-        <WatchtowerFeed alerts={alerts} hasKey={hasKey} eventCount={data.events.length} />
+        <WatchtowerFeed
+          alerts={alerts}
+          hasKey={hasKey}
+          eventCount={data.events.length}
+        />
       </div>
 
       {report && (
@@ -201,24 +252,33 @@ function Results({ data }: { data: AnalyzeResult }) {
       {!report && hasKey && aiError && (
         <div className="card" style={{ marginTop: 16 }}>
           <h3>AI Trust Report</h3>
-          <p className="warn" style={{ margin: "0 0 6px" }}>AI narrative unavailable: {aiError}</p>
+          <p className="warn" style={{ margin: "0 0 6px" }}>
+            AI narrative unavailable: {aiError}
+          </p>
           <p className="mut" style={{ margin: 0, fontSize: 13 }}>
-            The verdict and reconciliation above are computed on-chain and stand without the AI. If this
-            mentions a usage/rate limit, check console.anthropic.com → Billing/Limits.
+            The verdict and reconciliation above are computed on-chain and stand
+            without the AI. If this mentions a usage/rate limit, check
+            console.anthropic.com → Billing/Limits.
           </p>
         </div>
       )}
       {!hasKey && (
         <p className="mut" style={{ fontSize: 13, marginTop: 14 }}>
-          Verdict &amp; reconciliation above are computed deterministically on-chain — <b>no API key needed</b>.
-          Add <code>ANTHROPIC_API_KEY</code> in <code>.env.local</code> for the AI narrative report + event triage.
+          Verdict &amp; reconciliation above are computed deterministically
+          on-chain — <b>no API key needed</b>. Add{" "}
+          <code>ANTHROPIC_API_KEY</code> in <code>.env.local</code> for the AI
+          narrative report + event triage.
         </p>
       )}
     </div>
   );
 }
 
-function ReconCard({ assessment }: { assessment: AnalyzeResult["assessment"] }) {
+function ReconCard({
+  assessment,
+}: {
+  assessment: AnalyzeResult["assessment"];
+}) {
   return (
     <div className="card" style={{ marginTop: 16 }}>
       <h3>Scanner claim vs. on-chain evidence</h3>
@@ -234,14 +294,18 @@ function ReconCard({ assessment }: { assessment: AnalyzeResult["assessment"] }) 
           );
         })}
       </div>
-      <p className="mut" style={{ margin: "12px 0 0", fontSize: 12.5 }}>{assessment.caveat}</p>
+      <p className="mut" style={{ margin: "12px 0 0", fontSize: 12.5 }}>
+        {assessment.caveat}
+      </p>
     </div>
   );
 }
 
 function FactsCard({ facts, powers }: { facts: Facts; powers: Powers }) {
   const ownerOk = facts.owner.endsWith("0".repeat(40));
-  const detected = powers.present.length ? powers.present.join(", ") : "none detected";
+  const detected = powers.present.length
+    ? powers.present.join(", ")
+    : "none detected";
   const isErc20 = facts.standard === "erc20";
   const supply =
     isErc20 && facts.total_supply != null
@@ -257,24 +321,48 @@ function FactsCard({ facts, powers }: { facts: Facts; powers: Powers }) {
       ["Total supply", supply ?? "—", "v"],
     );
   } else if (facts.token_uri_sample) {
-    rows.push(["Metadata URI sample", truncate(facts.token_uri_sample, 42), "v"]);
+    rows.push([
+      "Metadata URI sample",
+      truncate(facts.token_uri_sample, 42),
+      "v",
+    ]);
   }
   rows.push(
-    ["Upgradeable proxy", facts.is_proxy ? "Yes — code can change" : "No — immutable", facts.is_proxy ? "bad" : "ok"],
+    [
+      "Upgradeable proxy",
+      facts.is_proxy ? "Yes — code can change" : "No — immutable",
+      facts.is_proxy ? "bad" : "ok",
+    ],
     ["Active admin owner", facts.owner_kind, ownerOk ? "ok" : "warn"],
-    ["Privileged surfaces", detected, powers.present.filter((p) => p !== "pause").length ? "warn" : "ok"],
-    ["Paused", facts.paused ? "Yes — transfers halted" : "No", facts.paused ? "bad" : "ok"],
+    [
+      "Privileged surfaces",
+      detected,
+      powers.present.filter((p) => p !== "pause").length ? "warn" : "ok",
+    ],
+    [
+      "Paused",
+      facts.paused ? "Yes — transfers halted" : "No",
+      facts.paused ? "bad" : "ok",
+    ],
   );
   return (
     <div className="card">
       <h3>Verified on-chain</h3>
       {rows.map(([k, v, cls]) => (
-        <div className="row" key={k}><span className="k">{k}</span><span className={`v ${cls}`}>{v}</span></div>
+        <div className="row" key={k}>
+          <span className="k">{k}</span>
+          <span className={`v ${cls}`}>{v}</span>
+        </div>
       ))}
       <div className="row">
         <span className="k">Contract</span>
         <span className="v">
-          <a href={`${facts.chain.explorer}/token/${facts.contract}`} target="_blank" rel="noopener noreferrer" style={{ color: "var(--acc)" }}>
+          <a
+            href={`${facts.chain.explorer}/token/${facts.contract}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: "var(--acc)" }}
+          >
             <code>{short(facts.contract)} ↗</code>
           </a>
         </span>
@@ -283,7 +371,15 @@ function FactsCard({ facts, powers }: { facts: Facts; powers: Powers }) {
   );
 }
 
-function WatchtowerFeed({ alerts, hasKey, eventCount }: { alerts: Verdict[] | null; hasKey: boolean; eventCount: number }) {
+function WatchtowerFeed({
+  alerts,
+  hasKey,
+  eventCount,
+}: {
+  alerts: Verdict[] | null;
+  hasKey: boolean;
+  eventCount: number;
+}) {
   return (
     <div className="card feed">
       <h3>AI Watchtower · recent events</h3>
@@ -292,8 +388,11 @@ function WatchtowerFeed({ alerts, hasKey, eventCount }: { alerts: Verdict[] | nu
           <div className="ev" key={i}>
             <span>{a.emoji}</span>
             <span>
-              <span className={`sev ${SEV_CLASS[a.severity]}`}>{a.severity.toUpperCase()}</span>{" "}
-              <span className="body">{a.headline}</span> <span className="why">{a.why_it_matters}</span>
+              <span className={`sev ${SEV_CLASS[a.severity]}`}>
+                {a.severity.toUpperCase()}
+              </span>{" "}
+              <span className="body">{a.headline}</span>{" "}
+              <span className="why">{a.why_it_matters}</span>
             </span>
           </div>
         ))
@@ -311,15 +410,33 @@ function WatchtowerFeed({ alerts, hasKey, eventCount }: { alerts: Verdict[] | nu
 /* ---------------- features ---------------- */
 function Features() {
   const items = [
-    { icon: "🔎", title: "AI Auditor & Explainer", body: "Reads the contract and live chain, then explains in plain English what powers exist and what could go wrong — and reconciles it when a scanner and the chain disagree.", tag: "The read" },
-    { icon: "📡", title: "AI Watchtower", body: "Streams on-chain events — ownership changes, mints, pauses, large transfers — and triages each into a clear, severity-ranked alert a non-engineer understands.", tag: "The watch" },
-    { icon: "🛡️", title: "Public Trust Page", body: "A live, self-serve trust status anyone can check before they buy or list — always current, never a stale PDF. Trust becomes a fact, not a claim.", tag: "The proof" },
+    {
+      icon: "🔎",
+      title: "AI Auditor & Explainer",
+      body: "Reads the contract and live chain, then explains in plain English what powers exist and what could go wrong — and reconciles it when a scanner and the chain disagree.",
+      tag: "The read",
+    },
+    {
+      icon: "📡",
+      title: "AI Watchtower",
+      body: "Streams on-chain events — ownership changes, mints, pauses, large transfers — and triages each into a clear, severity-ranked alert a non-engineer understands.",
+      tag: "The watch",
+    },
+    {
+      icon: "🛡️",
+      title: "Public Trust Page",
+      body: "A live, self-serve trust status anyone can check before they buy or list — always current, never a stale PDF. Trust becomes a fact, not a claim.",
+      tag: "The proof",
+    },
   ];
   return (
     <section className="section" id="features">
       <div className="container">
         <h2 className="h2">Three ways trust becomes verifiable</h2>
-        <p className="sec-lede">TrustLens turns raw Solidity and blockchain noise into something a person can actually act on — continuously, not once.</p>
+        <p className="sec-lede">
+          TrustLens turns raw Solidity and blockchain noise into something a
+          person can actually act on — continuously, not once.
+        </p>
         <div className="fgrid">
           {items.map((f) => (
             <div className="feature" key={f.title}>
@@ -338,15 +455,35 @@ function Features() {
 /* ---------------- how it works ---------------- */
 function HowItWorks() {
   const steps = [
-    { h: "Paste an address", p: "Any token or NFT contract on Polygon, Ethereum, Base, Arbitrum, Optimism, or BNB Chain. No wallet connection, no signup." },
-    { h: "We detect and read the chain", p: "TrustLens auto-detects the chain and standard, then pulls verified on-chain facts and recent events straight from public RPC — independently checkable by anyone." },
-    { h: "AI explains the risk", p: "Claude writes a plain-English Trust Report and triages events, cleanly separating verified facts from unverified claims." },
+    {
+      h: "Paste an address",
+      p: "Any token or NFT contract on Polygon, Ethereum, Base, Arbitrum, Optimism, or BNB Chain. No wallet connection, no signup.",
+    },
+    {
+      h: "We detect and read the chain",
+      p: "TrustLens auto-detects the chain and standard, then pulls verified on-chain facts and recent events straight from public RPC — independently checkable by anyone.",
+    },
+    {
+      h: "AI explains the risk",
+      p: "Claude writes a plain-English Trust Report and triages events, cleanly separating verified facts from unverified claims.",
+    },
   ];
   return (
-    <section className="section" id="how" style={{ background: "var(--bg-2)", borderTop: "1px solid var(--line)", borderBottom: "1px solid var(--line)" }}>
+    <section
+      className="section"
+      id="how"
+      style={{
+        background: "var(--bg-2)",
+        borderTop: "1px solid var(--line)",
+        borderBottom: "1px solid var(--line)",
+      }}
+    >
       <div className="container">
         <h2 className="h2">How it works</h2>
-        <p className="sec-lede">From address to answer in one step — the evidence is always yours to verify.</p>
+        <p className="sec-lede">
+          From address to answer in one step — the evidence is always yours to
+          verify.
+        </p>
         <div className="steps">
           {steps.map((s, i) => (
             <div className="step" key={i}>
@@ -371,10 +508,13 @@ function Honesty() {
           <div>
             <h3>Honest by design</h3>
             <p>
-              TrustLens never overstates safety. Without the verified source it says a risk is
-              <b> UNRESOLVED</b> instead of guessing, and it always separates what&apos;s proven on-chain from
-              what a third-party scanner merely claims. It makes trust <i>visible</i> — it does not pretend to
-              remove a dangerous power that only a contract fix can. That candor is the point.
+              TrustLens never overstates safety. Without the verified source it
+              says a risk is
+              <b> UNRESOLVED</b> instead of guessing, and it always separates
+              what&apos;s proven on-chain from what a third-party scanner merely
+              claims. It makes trust <i>visible</i> — it does not pretend to
+              remove a dangerous power that only a contract fix can. That candor
+              is the point.
             </p>
           </div>
         </div>
@@ -388,8 +528,13 @@ function Footer() {
   return (
     <footer className="footer">
       <div className="container row-f">
-        <div className="brand" style={{ fontSize: 14 }}><span className="logo" /> TrustLens</div>
-        <span>Not investment advice · on-chain data is point-in-time · built with Next.js + Claude</span>
+        <div className="brand" style={{ fontSize: 14 }}>
+          <span className="logo" /> TrustLens
+        </div>
+        <span>
+          Not investment advice · on-chain data is point-in-time · built with
+          Next.js + Claude
+        </span>
       </div>
     </footer>
   );
@@ -399,9 +544,16 @@ function Footer() {
 // Inline glossary term with a hover/focus tooltip. Focusable and dismissible for a11y.
 function Tip({ term, children }: { term: string; children: ReactNode }) {
   return (
-    <span className="tip" tabIndex={0} role="button" aria-label={`What is ${term}?`}>
+    <span
+      className="tip"
+      tabIndex={0}
+      role="button"
+      aria-label={`What is ${term}?`}
+    >
       {term}
-      <span className="tip-box" role="tooltip">{children}</span>
+      <span className="tip-box" role="tooltip">
+        {children}
+      </span>
     </span>
   );
 }
@@ -434,20 +586,33 @@ function ReportMarkdown({ text }: { text: string }) {
   const flushList = () => {
     if (!list.length) return;
     const items = list;
-    blocks.push(<ul key={key++}>{items.map((li, i) => <li key={i}>{renderInline(li)}</li>)}</ul>);
+    blocks.push(
+      <ul key={key++}>
+        {items.map((li, i) => (
+          <li key={i}>{renderInline(li)}</li>
+        ))}
+      </ul>,
+    );
     list = [];
   };
   for (const raw of lines) {
     const line = raw.trim();
-    if (!line) { flushList(); continue; }
+    if (!line) {
+      flushList();
+      continue;
+    }
     const bullet = line.match(/^[-*•]\s+(.*)$/);
-    if (bullet) { list.push(bullet[1]); continue; }
+    if (bullet) {
+      list.push(bullet[1]);
+      continue;
+    }
     flushList();
     // A whole-line **bold** (optionally prefixed by "#"s or "N.") is a section header.
     const boldHead = line.match(/^(?:#{1,4}\s+|\d+\.\s+)?\*\*(.+?)\*\*[:.]?$/);
     const mdHead = line.match(/^#{1,4}\s+(.*)$/);
     if (boldHead) blocks.push(<h4 key={key++}>{renderInline(boldHead[1])}</h4>);
-    else if (mdHead) blocks.push(<h4 key={key++}>{renderInline(mdHead[1])}</h4>);
+    else if (mdHead)
+      blocks.push(<h4 key={key++}>{renderInline(mdHead[1])}</h4>);
     else blocks.push(<p key={key++}>{renderInline(line)}</p>);
   }
   flushList();
@@ -456,7 +621,9 @@ function ReportMarkdown({ text }: { text: string }) {
 
 /* ---------------- utils ---------------- */
 function short(addr: string) {
-  return addr && addr.length > 12 ? `${addr.slice(0, 6)}…${addr.slice(-4)}` : addr;
+  return addr && addr.length > 12
+    ? `${addr.slice(0, 6)}…${addr.slice(-4)}`
+    : addr;
 }
 
 function truncate(s: string, n: number) {

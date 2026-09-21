@@ -48,7 +48,7 @@ cp .env.example .env.local
 # edit .env.local and paste your key after ANTHROPIC_API_KEY=
 
 npm run dev
-# open http://localhost:3000, paste any token/NFT address (defaults to the demo token), click Verify trust
+# open http://localhost:3000, paste any token/NFT contract address, click Verify trust
 ```
 
 Production build:
