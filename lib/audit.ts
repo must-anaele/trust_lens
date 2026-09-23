@@ -1,19 +1,15 @@
-// TrustLens · audit — the AI Auditor & Explainer.
-// Reads on-chain facts + scanner claims + (optional) verified source → plain-English
-// Trust Report, reconciling scanner-vs-chain. Requires ANTHROPIC_API_KEY (server-side).
-
-import Anthropic from "@anthropic-ai/sdk";
+// TrustLens · audit — the AI Auditor & Explainer, using the Must LiteLLM Responses API.
 import type { Facts } from "./types";
 import { SPECS } from "./standards";
+import { generateText } from "./responses-client";
 
-const MODEL = "claude-sonnet-4-6";
-
-function buildSystem(facts: Facts): string {
+function buildSystem(facts: Facts, language: "en" | "ko"): string {
   const spec = SPECS[facts.standard];
   const nft = facts.standard !== "erc20";
   return `You are TrustLens, a smart-contract trust auditor for ${spec.label}s on ${facts.chain.name}. \
 Turn raw on-chain facts, third-party scanner claims, and (when available) verified Solidity source \
-into a short, plain-English Trust Report a non-engineer can act on.
+into a short, plain-language Trust Report a non-engineer can act on.
+${language === "ko" ? "Write the entire report in natural Korean. Keep technical identifiers, function names, standards, and addresses unchanged." : "Write the entire report in English."}
 
 Hard rules:
 - Separate VERIFIED on-chain facts from UNVERIFIED third-party claims. Never present a scanner claim as fact.
@@ -24,7 +20,7 @@ Hard rules:
 ${nft ? "- For NFTs: focus on mint controls, metadata mutability, and royalties — not token supply or fees." : ""}`;
 }
 
-function buildPrompt(facts: Facts, claims: string[], source?: string): string {
+function buildPrompt(facts: Facts, claims: string[], source?: string, language: "en" | "ko" = "en"): string {
   const nft = facts.standard !== "erc20";
   return `Produce a Trust Report for this ${SPECS[facts.standard].label} on ${facts.chain.name}.
 
@@ -36,6 +32,8 @@ ${claims.length ? claims.map((c) => `- ${c}`).join("\n") : "- (none)"}
 
 ## Verified Solidity source
 ${source ? source.slice(0, 60000) : "(NOT PROVIDED — verified source not yet fetched)"}
+
+${language === "ko" ? "Write all headings and explanations in Korean, while preserving technical terms and quoted evidence." : "Write all headings and explanations in English."}
 
 Sections:
 1. **Verdict** — one line, plain English.
@@ -50,19 +48,11 @@ export async function audit(
   facts: Facts,
   claims: string[],
   source?: string,
+  language: "en" | "ko" = "en",
 ): Promise<string> {
-  const client = new Anthropic(); // reads ANTHROPIC_API_KEY
-  // Stream under the hood (robust for long output), return the finished text.
-  const stream = client.messages.stream({
-    model: MODEL,
-    max_tokens: 8000,
-    thinking: { type: "adaptive" },
-    system: buildSystem(facts),
-    messages: [{ role: "user", content: buildPrompt(facts, claims, source) }],
+  return generateText({
+    instructions: buildSystem(facts, language),
+    input: buildPrompt(facts, claims, source, language),
+    maxOutputTokens: 8000,
   });
-  const final = await stream.finalMessage();
-  return final.content
-    .filter((b): b is Anthropic.TextBlock => b.type === "text")
-    .map((b) => b.text)
-    .join("");
 }

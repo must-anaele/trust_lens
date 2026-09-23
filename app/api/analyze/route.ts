@@ -1,5 +1,5 @@
 // POST /api/analyze  { address, source? }  →  AnalyzeResult
-// Server-side only: the Anthropic key never reaches the browser.
+// Server-side only: the Must LiteLLM bearer token never reaches the browser.
 // Auto-detects the chain and token standard, then runs the standard-aware pipeline.
 
 import { NextRequest, NextResponse } from "next/server";
@@ -7,6 +7,7 @@ import { detectAddress } from "@/lib/detect";
 import { collectFacts, scanPowers, recentTransfers } from "@/lib/collect";
 import { assess } from "@/lib/assess";
 import type { AnalyzeResult, Verdict } from "@/lib/types";
+import { hasAiProviderConfig } from "@/lib/responses-client";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,10 +20,12 @@ export const maxDuration = 120; // long enough for the multi-chain probe + AI au
 export async function POST(req: NextRequest) {
   let address = "";
   let source: string | undefined;
+  let language: "en" | "ko" = "en";
   try {
     const body = await req.json();
     address = (body.address ?? "").trim();
     source = body.source ? String(body.source) : undefined;
+    language = body.language === "ko" ? "ko" : "en";
   } catch {
     return NextResponse.json({ error: "invalid JSON body" }, { status: 400 });
   }
@@ -54,19 +57,19 @@ export async function POST(req: NextRequest) {
   const assessment = assess(facts, powers);
   const events = await recentTransfers(config, standard, address, facts.decimals ?? undefined);
 
-  const hasKey = !!process.env.ANTHROPIC_API_KEY;
+  const hasAiProvider = hasAiProviderConfig();
   let report: string | null = null;
   let alerts: Verdict[] | null = null;
   let aiError: string | null = null;
 
-  if (hasKey) {
+  if (hasAiProvider) {
     try {
       const { audit } = await import("@/lib/audit");
       const { classifyEvent } = await import("@/lib/watchtower");
-      report = await audit(facts, [], source);
+      report = await audit(facts, [], source, language);
       alerts = events.length
         ? await Promise.all(
-            events.map((e) => classifyEvent(e, standard, chain.name, facts.total_supply ?? null)),
+            events.map((e) => classifyEvent(e, standard, chain.name, facts.total_supply ?? null, language)),
           )
         : null;
     } catch (e) {
@@ -75,7 +78,7 @@ export async function POST(req: NextRequest) {
   }
 
   const result: AnalyzeResult = {
-    facts, powers, assessment, events, report, alerts, aiError, hasKey,
+    facts, powers, assessment, events, report, alerts, aiError, hasAiProvider,
     alsoFoundOn: detection.alsoFoundOn,
   };
   return NextResponse.json(result);

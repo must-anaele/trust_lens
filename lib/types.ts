@@ -96,6 +96,6 @@ export interface AnalyzeResult {
   report: string | null;
   alerts: Verdict[] | null;
   aiError: string | null;
-  hasKey: boolean;
+  hasAiProvider: boolean;
   alsoFoundOn?: ChainInfo[]; // same address recognized on other chains
 }

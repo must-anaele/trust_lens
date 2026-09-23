@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { LanguageProvider } from "@/components/language-provider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -14,15 +15,15 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TrustLens — AI trust verification for on-chain tokens",
+  title: "TrustLens — evidence-based blockchain trust analysis",
   description:
-    "Turn a token's trust from a static claim into a continuously verified, plain-English feed. Live on-chain checks + an AI auditor, in seconds.",
+    "Review contract capabilities and wallet approvals using evidence from supported public blockchains.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${mono.variable}`}>
-      <body>{children}</body>
+      <body><LanguageProvider>{children}</LanguageProvider></body>
     </html>
   );
 }
