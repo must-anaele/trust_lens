@@ -29,8 +29,11 @@ export interface Facts {
   owner_kind: string;
   paused: boolean;
   is_proxy: boolean;
+<<<<<<< HEAD
   proxy_implementation: string | null;
   proxy_admin: string | null;
+=======
+>>>>>>> origin/main
   bytecode_bytes: number | null;
 }
 

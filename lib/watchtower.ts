@@ -1,7 +1,14 @@
+<<<<<<< HEAD
 // TrustLens · watchtower — classify a chain event using Anthropic's Messages API.
 import type { Standard, TransferEvent, Verdict } from "./types";
 import { SPECS } from "./standards";
 import { generateText } from "./anthropic-client";
+=======
+// TrustLens · watchtower — classify a chain event using the Must LiteLLM Responses API.
+import type { Standard, TransferEvent, Verdict } from "./types";
+import { SPECS } from "./standards";
+import { generateText } from "./responses-client";
+>>>>>>> origin/main
 
 const VERDICT_SCHEMA = {
   type: "object",

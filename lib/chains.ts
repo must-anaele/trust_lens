@@ -101,6 +101,7 @@ export function toChainInfo(c: ChainConfig): ChainInfo {
 }
 
 export function chainById(id: number): ChainConfig | undefined {
+<<<<<<< HEAD
   const chain = CHAINS.find((c) => c.id === id);
   if (!chain) return undefined;
   const envKey = ({
@@ -115,6 +116,9 @@ export function chainById(id: number): ChainConfig | undefined {
     ? process.env[envKey]?.split(",").map((url) => url.trim()).filter(Boolean)
     : undefined;
   return configured?.length ? { ...chain, rpcs: configured } : chain;
+=======
+  return CHAINS.find((c) => c.id === id);
+>>>>>>> origin/main
 }
 
 // Generic JSON-RPC call with per-chain endpoint failover. Throws only when every
@@ -125,7 +129,11 @@ export async function rpc(
   params: unknown[],
 ): Promise<any> {
   const body = JSON.stringify({ jsonrpc: "2.0", id: 1, method, params });
+<<<<<<< HEAD
   const failures: string[] = [];
+=======
+  let last: unknown = null;
+>>>>>>> origin/main
   for (const url of rpcs) {
     try {
       const res = await fetch(url, {
@@ -134,6 +142,7 @@ export async function rpc(
         body,
         signal: AbortSignal.timeout(15_000),
       });
+<<<<<<< HEAD
       const raw = await res.text();
       if (!res.ok) {
         let detail = "";
@@ -174,6 +183,16 @@ export async function rpc(
   }
   const details = [...new Set(failures)].slice(0, 3).join("; ");
   throw new Error(`All ${rpcs.length} RPC endpoints failed${details ? `: ${details}` : "."}`);
+=======
+      const data = await res.json();
+      if ("result" in data) return data.result;
+      last = data.error ?? data;
+    } catch (e) {
+      last = e instanceof Error ? e.message : String(e);
+    }
+  }
+  throw new Error(`All RPC endpoints failed: ${JSON.stringify(last)}`);
+>>>>>>> origin/main
 }
 
 // eth_call helper: returns null when the selector reverts / doesn't exist.

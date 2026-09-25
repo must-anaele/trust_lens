@@ -381,6 +381,7 @@ code, .mono { font-family: var(--font-mono), ui-monospace, Menlo, monospace; }
 @media (max-width: 640px) { .wallet-hero-grid { grid-template-columns: 1fr; }.wallet-hero-art { width: 220px; }.wallet-proof-strip { gap: 10px 18px; }.wallet-form-card, .wallet-report { padding: 16px; }.wallet-sidebar { grid-template-columns: 1fr; }.wallet-summary { align-items: flex-start; }.wallet-overview { grid-template-columns: 1fr; }.approval-details > div { flex-direction: column; gap: 3px; }.approval-details code { max-width: 100%; text-align: left; } }
 @media (max-width: 520px) { .wallet-form { grid-template-columns: 1fr; }.wallet-form-heading { align-items: flex-start; flex-wrap: wrap; }.read-only-badge { margin-left: 59px; margin-top: -7px; }.wallet-summary { flex-direction: column; }.summary-stat { display: flex; align-items: baseline; gap: 8px; border-left: 0; border-top: 1px solid var(--line-2); padding: 10px 0 0; text-align: left; }.summary-stat strong { font-size: 20px; } }
 
+<<<<<<< HEAD
 /* ---------- staff review console and public evidence reports ---------- */
 .admin-auth-page { min-height: 100vh; display: grid; align-content: start; justify-items: center; gap: 42px; padding: 8vh 22px; background: radial-gradient(50% 45% at 50% 0%, rgba(79,140,255,.12), transparent 80%), var(--bg); }
 .admin-auth-page > .brand { justify-self: center; }
@@ -442,6 +443,8 @@ code, .mono { font-family: var(--font-mono), ui-monospace, Menlo, monospace; }
 @media (max-width: 700px) { .admin-content { padding-inline: 15px; }.admin-panel { padding: 16px; }.asset-profile-grid { grid-template-columns: 1fr; }.admin-topbar { padding-inline: 15px; }.admin-topbar > div > span { display: none; }.admin-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }.public-facts-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 520px) { .admin-scan-form { grid-template-columns: 1fr; }.admin-address-field, .admin-confirm, .admin-scan-form .err, .admin-success { grid-column: 1; }.admin-heading { align-items: center; }.admin-heading h1 { font-size: 28px; }.review-queue-title { flex-direction: column; }.review-finding { grid-template-columns: 1fr; }.review-finding small { grid-column: 1; }.review-actions { align-items: stretch; flex-direction: column; }.review-actions > label:first-child { width: 100%; }.review-actions .btn { align-self: flex-start; }.public-report-page { padding-top: 28px; }.public-report-card { padding: 16px; }.public-report-heading { flex-direction: column; }.public-facts-grid { grid-template-columns: 1fr 1fr; }.public-findings article { grid-template-columns: 1fr; gap: 7px; } }
 
+=======
+>>>>>>> origin/main
 /* ---------- honesty callout ---------- */
 .callout {
   background: var(--grad-soft); border: 1px solid var(--line-2); border-radius: var(--radius);

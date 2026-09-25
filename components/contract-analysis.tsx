@@ -203,15 +203,24 @@ function Results({ data }: { data: AnalyzeResult }) {
           </p>
           <p className="mut" style={{ margin: 0, fontSize: 13 }}>
             The verdict and reconciliation above are computed from chain evidence
+<<<<<<< HEAD
             and remain available without the AI. Check the Anthropic configuration
             and confirm the selected model is enabled for your account.
+=======
+            and remain available without the AI. Check the Must LiteLLM gateway
+            configuration or ask its owner about model access and rate limits.
+>>>>>>> origin/main
           </p>
         </div>
       )}
       {!hasAiProvider && (
         <p className="mut" style={{ fontSize: 13, marginTop: 14 }}>
           {t("result.noAi")} <b>{t("result.noAiNeed")}</b>. {t("result.configure")} {" "}
+<<<<<<< HEAD
           <code>ANTHROPIC_API_KEY</code> {t("result.enableAi")}
+=======
+          <code>MUST_LITELLM_API_KEY</code> {t("result.enableAi")}
+>>>>>>> origin/main
         </p>
       )}
     </div>
@@ -273,12 +282,15 @@ function FactsCard({ facts, powers }: { facts: Facts; powers: Powers }) {
       "v",
     ]);
   }
+<<<<<<< HEAD
   if (facts.is_proxy) {
     rows.push(
       [t("result.proxyImpl"), facts.proxy_implementation ?? "unresolved", facts.proxy_implementation ? "v" : "warn"],
       [t("result.proxyAdmin"), facts.proxy_admin ?? "unresolved", facts.proxy_admin ? "v" : "warn"],
     );
   }
+=======
+>>>>>>> origin/main
   rows.push(
     [
       t("result.proxy"),

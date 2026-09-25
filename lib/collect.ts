@@ -8,8 +8,11 @@ import type { ChainInfo, Facts, Powers, Standard, TransferEvent } from "./types"
 
 const EIP1967_IMPL =
   "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc";
+<<<<<<< HEAD
 const EIP1967_ADMIN =
   "0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103";
+=======
+>>>>>>> origin/main
 const ZERO = "0x0000000000000000000000000000000000000000";
 
 // tokenURI(uint256) and uri(uint256) selectors for NFT metadata sampling.
@@ -69,9 +72,12 @@ export async function collectFacts(
 
   const impl = await rpc(rpcs, "eth_getStorageAt", [contract, EIP1967_IMPL, "latest"]);
   const isProxy = !!(impl && BigInt(impl) !== 0n);
+<<<<<<< HEAD
   const adminSlot = isProxy ? await rpc(rpcs, "eth_getStorageAt", [contract, EIP1967_ADMIN, "latest"]) : null;
   const proxyImplementation = isProxy ? decodeAddr(impl) : null;
   const proxyAdmin = adminSlot ? decodeAddr(adminSlot) : null;
+=======
+>>>>>>> origin/main
   const tokenCode = await rpc(rpcs, "eth_getCode", [contract, "latest"]);
 
   // Standard-specific metadata.
@@ -112,8 +118,11 @@ export async function collectFacts(
     owner_kind: ownerKind,
     paused: pausedHex !== null && pausedHex !== "0x" && BigInt(pausedHex) === 1n,
     is_proxy: isProxy,
+<<<<<<< HEAD
     proxy_implementation: proxyImplementation && proxyImplementation !== ZERO ? proxyImplementation : null,
     proxy_admin: proxyAdmin && proxyAdmin !== ZERO ? proxyAdmin : null,
+=======
+>>>>>>> origin/main
     bytecode_bytes:
       typeof tokenCode === "string" ? (tokenCode.length - 2) / 2 : null,
   };
