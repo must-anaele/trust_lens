@@ -54,16 +54,15 @@ export function ContractAnalyzer() {
           {t("home.title")}{" "}
           <span className="grad">{t("home.titleAccent")}</span>
         </h1>
-        <p className="lede">
-          {t("home.lede")}
-        </p>
+        <p className="lede">{t("home.lede")}</p>
 
         <div className="analyzer">
           <p className="label">
             {t("home.paste")}{" "}
             <Tip term="token contract">
-              <b>{t("home.tokenStandards")}</b>{" "}{t("home.glossary")}
-              <br />• {t("home.erc20")} <code>totalSupply</code>, <code>transfer</code>)
+              <b>{t("home.tokenStandards")}</b> {t("home.glossary")}
+              <br />• {t("home.erc20")} <code>totalSupply</code>,{" "}
+              <code>transfer</code>)
               <br />• {t("home.erc721")}
               <br />• {t("home.erc1155")}
               <span className="tip-src">
@@ -76,7 +75,8 @@ export function ContractAnalyzer() {
                   Investopedia — ERC-20
                 </a>
               </span>
-            </Tip>{" "}{t("home.contractAddress")}
+            </Tip>{" "}
+            {t("home.contractAddress")}
           </p>
           <div className="bar">
             <input
@@ -96,9 +96,7 @@ export function ContractAnalyzer() {
             </button>
           </div>
           <button className="linkbtn" onClick={() => setShowSource((s) => !s)}>
-            {showSource
-              ? t("home.hideSource")
-              : t("home.showSource")}
+            {showSource ? t("home.hideSource") : t("home.showSource")}
           </button>
           {showSource && (
             <textarea
@@ -167,14 +165,17 @@ function Results({ data }: { data: AnalyzeResult }) {
           <div className="vt">{assessment.headline}</div>
           <div className="vs">
             {facts.name ?? "Unknown"} {facts.symbol ? `(${facts.symbol})` : ""}{" "}
-          · {stdLabel} on {facts.chain.shortName} · {short(facts.contract)} · {t("result.computed")}
+            · {stdLabel} on {facts.chain.shortName} · {short(facts.contract)} ·{" "}
+            {t("result.computed")}
           </div>
         </span>
       </div>
 
       {alsoFoundOn && alsoFoundOn.length > 0 && (
         <p className="mut" style={{ margin: "10px 2px 0", fontSize: 13 }}>
-          {t("result.alsoFound")} {alsoFoundOn.map((c) => c.shortName).join(", ")} {t("result.covers")} {facts.chain.shortName}.
+          {t("result.alsoFound")}{" "}
+          {alsoFoundOn.map((c) => c.shortName).join(", ")} {t("result.covers")}{" "}
+          {facts.chain.shortName}.
         </p>
       )}
 
@@ -191,7 +192,7 @@ function Results({ data }: { data: AnalyzeResult }) {
 
       {report && (
         <div className="card report" style={{ marginTop: 16 }}>
-        <h3>{t("result.report")}</h3>
+          <h3>{t("result.report")}</h3>
           <ReportMarkdown text={report} />
         </div>
       )}
@@ -202,25 +203,18 @@ function Results({ data }: { data: AnalyzeResult }) {
             AI narrative unavailable: {aiError}
           </p>
           <p className="mut" style={{ margin: 0, fontSize: 13 }}>
-            The verdict and reconciliation above are computed from chain evidence
-<<<<<<< HEAD
-            and remain available without the AI. Check the Anthropic configuration
-            and confirm the selected model is enabled for your account.
-=======
-            and remain available without the AI. Check the Must LiteLLM gateway
-            configuration or ask its owner about model access and rate limits.
->>>>>>> origin/main
+            The verdict and reconciliation above are computed from chain
+            evidence and remain available without the AI. Check the Anthropic
+            configuration and confirm the selected model is enabled for your
+            account.
           </p>
         </div>
       )}
       {!hasAiProvider && (
         <p className="mut" style={{ fontSize: 13, marginTop: 14 }}>
-          {t("result.noAi")} <b>{t("result.noAiNeed")}</b>. {t("result.configure")} {" "}
-<<<<<<< HEAD
-          <code>ANTHROPIC_API_KEY</code> {t("result.enableAi")}
-=======
-          <code>MUST_LITELLM_API_KEY</code> {t("result.enableAi")}
->>>>>>> origin/main
+          {t("result.noAi")} <b>{t("result.noAiNeed")}</b>.{" "}
+          {t("result.configure")} <code>ANTHROPIC_API_KEY</code>{" "}
+          {t("result.enableAi")}
         </p>
       )}
     </div>
@@ -268,7 +262,11 @@ function FactsCard({ facts, powers }: { facts: Facts; powers: Powers }) {
       : null;
   const rows: [string, string, string][] = [
     [t("result.chain"), `${facts.chain.name}`, "v"],
-    [t("result.standard"), facts.standard.replace("erc", "ERC-").toUpperCase(), "v"],
+    [
+      t("result.standard"),
+      facts.standard.replace("erc", "ERC-").toUpperCase(),
+      "v",
+    ],
   ];
   if (isErc20) {
     rows.push(
@@ -282,15 +280,20 @@ function FactsCard({ facts, powers }: { facts: Facts; powers: Powers }) {
       "v",
     ]);
   }
-<<<<<<< HEAD
   if (facts.is_proxy) {
     rows.push(
-      [t("result.proxyImpl"), facts.proxy_implementation ?? "unresolved", facts.proxy_implementation ? "v" : "warn"],
-      [t("result.proxyAdmin"), facts.proxy_admin ?? "unresolved", facts.proxy_admin ? "v" : "warn"],
+      [
+        t("result.proxyImpl"),
+        facts.proxy_implementation ?? "unresolved",
+        facts.proxy_implementation ? "v" : "warn",
+      ],
+      [
+        t("result.proxyAdmin"),
+        facts.proxy_admin ?? "unresolved",
+        facts.proxy_admin ? "v" : "warn",
+      ],
     );
   }
-=======
->>>>>>> origin/main
   rows.push(
     [
       t("result.proxy"),

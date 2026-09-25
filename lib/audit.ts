@@ -1,14 +1,7 @@
-<<<<<<< HEAD
 // TrustLens · audit — the AI Auditor & Explainer, using Anthropic's Messages API.
 import type { Facts } from "./types";
 import { SPECS } from "./standards";
 import { generateText } from "./anthropic-client";
-=======
-// TrustLens · audit — the AI Auditor & Explainer, using the Must LiteLLM Responses API.
-import type { Facts } from "./types";
-import { SPECS } from "./standards";
-import { generateText } from "./responses-client";
->>>>>>> origin/main
 
 function buildSystem(facts: Facts, language: "en" | "ko"): string {
   const spec = SPECS[facts.standard];

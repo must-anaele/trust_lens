@@ -20,11 +20,7 @@ export async function POST(req: NextRequest) {
   if (!/^0x[0-9a-fA-F]{40}$/.test(address)) {
     return NextResponse.json({ error: korean ? "올바른 EVM 지갑 주소를 입력하세요." : "Enter a valid EVM wallet address." }, { status: 400 });
   }
-<<<<<<< HEAD
   if (body.consent !== true) {
-=======
-  if (!body.consent) {
->>>>>>> origin/main
     return NextResponse.json({ error: korean ? "조회 전에 공개 체인 데이터 안내를 확인해 주세요." : "Please confirm the public-chain data notice before scanning." }, { status: 400 });
   }
   const chain = chainById(chainId);
@@ -39,7 +35,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Wallet review failed.";
-<<<<<<< HEAD
     if (message.startsWith("All ") && message.includes("RPC endpoints failed")) {
       const rpcVariable = ({
         137: "POLYGON_RPC_URLS", 1: "ETHEREUM_RPC_URLS", 8453: "BASE_RPC_URLS",
@@ -54,8 +49,6 @@ export async function POST(req: NextRequest) {
         error: `Could not reach ${chain.name} RPC endpoints. Check the server's outbound network access or configure ${rpcVariable} in .env.local. Details: ${message}`,
       }, { status: 502 });
     }
-=======
->>>>>>> origin/main
     return NextResponse.json({ error: message }, { status: 502 });
   }
 }

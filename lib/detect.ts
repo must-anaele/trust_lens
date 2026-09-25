@@ -34,14 +34,9 @@ async function probeChain(
   }
 }
 
-<<<<<<< HEAD
 export async function detectAddress(contract: string, requestedChainId?: number): Promise<DetectionResult> {
   const targets = requestedChainId === undefined ? CHAINS : CHAINS.filter((chain) => chain.id === requestedChainId);
   const results = await Promise.all(targets.map((c) => probeChain(c, contract)));
-=======
-export async function detectAddress(contract: string): Promise<DetectionResult> {
-  const results = await Promise.all(CHAINS.map((c) => probeChain(c, contract)));
->>>>>>> origin/main
 
   const reachable = results.some((r) => r.reachable);
   // CHAINS is already in priority order; the first hit with a recognized standard wins.
