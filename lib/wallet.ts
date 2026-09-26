@@ -57,14 +57,29 @@ async function getLogs(config: ChainConfig, filter: Record<string, unknown>) {
   const head = Number(BigInt(await rpc(config.rpcs, "eth_blockNumber", [])));
   const from = Math.max(0, head - HISTORY_BLOCKS + 1);
   const logs: any[] = [];
+
+  async function getLogRange(start: number, end: number, depth = 0): Promise<any[]> {
+    try {
+      const result = await rpc(config.rpcs, "eth_getLogs", [{
+        ...filter,
+        fromBlock: `0x${start.toString(16)}`,
+        toBlock: `0x${end.toString(16)}`,
+      }]);
+      return Array.isArray(result) ? result : [];
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const rangeLimit = /range.*(?:block|limit)|(?:block|range).*(?:limit|exceed|over)|10,?000 blocks/i.test(message);
+      if (!rangeLimit || start >= end || depth >= 12) throw error;
+      const middle = Math.floor((start + end) / 2);
+      const earlier = await getLogRange(start, middle, depth + 1);
+      const later = await getLogRange(middle + 1, end, depth + 1);
+      return earlier.concat(later);
+    }
+  }
+
   for (let start = from; start <= head; start += CHUNK_SIZE) {
     const end = Math.min(head, start + CHUNK_SIZE - 1);
-    const chunk = await rpc(config.rpcs, "eth_getLogs", [{
-      ...filter,
-      fromBlock: `0x${start.toString(16)}`,
-      toBlock: `0x${end.toString(16)}`,
-    }]);
-    if (Array.isArray(chunk)) logs.push(...chunk);
+    logs.push(...await getLogRange(start, end));
     if (logs.length > MAX_LOGS) {
       throw new Error("Too many approval events in this scan window. Narrow the review to a smaller period or try again later.");
     }

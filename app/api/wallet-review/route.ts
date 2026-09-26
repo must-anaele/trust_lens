@@ -35,6 +35,11 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Wallet review failed.";
+    if (/specify an address|address in your request/i.test(message)) {
+      return NextResponse.json({
+        error: `${chain.name} RPC provider requires a contract address filter for log searches. Wallet review searches approval events across contracts, so configure an RPC provider that supports topic-filtered eth_getLogs requests without a contract address. Details: ${message}`,
+      }, { status: 502 });
+    }
     if (message.startsWith("All ") && message.includes("RPC endpoints failed")) {
       const rpcVariable = ({
         137: "POLYGON_RPC_URLS", 1: "ETHEREUM_RPC_URLS", 8453: "BASE_RPC_URLS",

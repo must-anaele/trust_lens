@@ -22,8 +22,8 @@ export const CHAINS: ChainConfig[] = [
     shortName: "Polygon",
     rpcs: [
       "https://polygon.drpc.org",
-      "https://polygon-bor-rpc.publicnode.com",
-      "https://polygon.llamarpc.com",
+      "https://polygon-public.nodies.app",
+      "https://1rpc.io/matic",
     ],
     explorer: "https://polygonscan.com",
     nativeSymbol: "POL",
