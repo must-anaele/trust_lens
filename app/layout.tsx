@@ -15,9 +15,23 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://trust-lens-omega.vercel.app"),
   title: "TrustLens — evidence-based blockchain trust analysis",
   description:
     "Review contract capabilities and wallet approvals using evidence from supported public blockchains.",
+  openGraph: {
+    type: "website",
+    siteName: "TRUST Lens",
+    title: "TRUST Lens — evidence-based blockchain trust analysis",
+    description: "Review contract capabilities and wallet approvals using evidence from supported public blockchains.",
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "TRUST Lens — evidence-based blockchain trust analysis" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "TRUST Lens — evidence-based blockchain trust analysis",
+    description: "Review contract capabilities and wallet approvals using evidence from supported public blockchains.",
+    images: ["/opengraph-image"],
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
