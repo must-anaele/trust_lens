@@ -125,15 +125,25 @@ export async function scanPowers(
   contract: string,
   ownerRenounced: boolean,
   isProxy: boolean,
+  implementation?: string | null,
 ): Promise<Powers> {
-  let bc = "";
-  try {
-    const code = await rpc(config.rpcs, "eth_getCode", [contract, "latest"]);
-    bc = typeof code === "string" ? code.slice(2).toLowerCase() : "";
-  } catch {
-    bc = "";
-  }
-  const any = (sels: string[]) => sels.some((s) => bc.includes(s));
+  const addresses = [...new Set([contract, ...(implementation ? [implementation] : [])])];
+  let bytecodeScanComplete = !isProxy || Boolean(implementation);
+  const bytecodes = await Promise.all(addresses.map(async (address) => {
+    try {
+      const code = await rpc(config.rpcs, "eth_getCode", [address, "latest"]);
+      if (typeof code !== "string" || !code.startsWith("0x") || code === "0x") {
+        bytecodeScanComplete = false;
+        return "";
+      }
+      return code.slice(2).toLowerCase();
+    } catch {
+      bytecodeScanComplete = false;
+      return "";
+    }
+  }));
+  const proxyBytecode = bytecodes[0] || "";
+  const any = (sels: string[]) => sels.some((selector) => bytecodes.some((code) => code.includes(selector)));
   const priv = SPECS[standard].privSelectors;
 
   const has_mint = priv.mint ? any(priv.mint) : false;
@@ -159,7 +169,8 @@ export async function scanPowers(
   if (has_metadata_mutable) present.push("metadata-mutable");
 
   return {
-    bytecode_bytes: bc ? bc.length / 2 : null,
+    bytecode_bytes: proxyBytecode ? proxyBytecode.length / 2 : null,
+    bytecode_scan_complete: bytecodeScanComplete,
     has_mint, has_burn, has_pause, has_fee_hint, has_blacklist, has_accesscontrol,
     has_metadata_mutable,
     is_proxy: isProxy, owner_renounced: ownerRenounced, pause_callable, present,

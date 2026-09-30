@@ -49,7 +49,7 @@ export function PublicTrustReport({ token }: { token: string }) {
               <div><span>Pause state</span><strong>{data.facts.paused ? "Paused" : "Not paused"}</strong></div>
               <div><span>Upgradeable proxy</span><strong>{data.facts.is_proxy ? "Detected" : "Not detected"}</strong></div>
               {data.facts.is_proxy && <><div><span>Proxy implementation</span><strong>{data.facts.proxy_implementation || "Unresolved"}</strong></div><div><span>Proxy admin</span><strong>{data.facts.proxy_admin || "Unresolved"}</strong></div></>}
-              <div><span>Privileged surfaces</span><strong>{data.powers.present.length ? data.powers.present.join(", ") : "None detected"}</strong></div>
+              <div><span>Privileged surfaces</span><strong>{[...data.powers.present, ...(!data.powers.bytecode_scan_complete ? ["Scan incomplete; negative results unresolved"] : [])].join(", ") || "None detected"}</strong></div>
               <div><span>Bytecode size</span><strong>{data.facts.bytecode_bytes ?? "Unresolved"} bytes</strong></div>
             </div>
           </section>

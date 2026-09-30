@@ -37,6 +37,7 @@ export interface Facts {
 // Result of the deployed-bytecode privileged-function scan.
 export interface Powers {
   bytecode_bytes: number | null;
+  bytecode_scan_complete: boolean;
   has_mint: boolean;
   has_burn: boolean;
   has_pause: boolean;

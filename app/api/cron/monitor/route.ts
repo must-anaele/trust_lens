@@ -29,6 +29,7 @@ function snapshotOf(facts: Awaited<ReturnType<typeof collectFacts>>, powers: Awa
     proxy_implementation: facts.proxy_implementation,
     proxy_admin: facts.proxy_admin,
     bytecode_bytes: facts.bytecode_bytes,
+    bytecode_scan_complete: powers.bytecode_scan_complete,
     total_supply_raw: facts.total_supply_raw ?? null,
     privileged_surfaces: [...powers.present].sort(),
     owner_renounced: powers.owner_renounced,
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest) {
       if (!config) { failures.push({ reviewId: review.id, message: "Unsupported network." }); continue; }
       try {
         const facts = await collectFacts(config, toChainInfo(config), review.result.facts.standard, review.address);
-        const powers = await scanPowers(config, review.result.facts.standard, review.address, facts.owner.toLowerCase() === `0x${"0".repeat(40)}`, facts.is_proxy);
+        const powers = await scanPowers(config, review.result.facts.standard, review.address, facts.owner.toLowerCase() === `0x${"0".repeat(40)}`, facts.is_proxy, facts.proxy_implementation);
         const assessment = assess(facts, powers);
         const current = snapshotOf(facts, powers, assessment);
         const prior = byId.get(review.id);

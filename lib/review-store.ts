@@ -27,8 +27,8 @@ export interface MonitorSnapshot {
 
 function config() {
   const url = process.env.SUPABASE_URL?.replace(/\/+$/, "");
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) throw new Error("Review storage is not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.");
+  const key = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) throw new Error("Review storage is not configured. Set SUPABASE_URL and SUPABASE_SECRET_KEY.");
   return { url, key };
 }
 
@@ -38,7 +38,7 @@ async function rest<T>(table: string, query: string, init: RequestInit = {}): Pr
     ...init,
     headers: {
       apikey: key,
-      authorization: `Bearer ${key}`,
+      ...(key.startsWith("sb_secret_") ? {} : { authorization: `Bearer ${key}` }),
       "content-type": "application/json",
       ...(init.headers ?? {}),
     },

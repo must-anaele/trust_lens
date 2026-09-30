@@ -16,6 +16,8 @@ export function SiteHeader() {
           <Link href="/#features" className="hide-sm">{t("nav.platform")}</Link>
           <Link href="/#how" className="hide-sm">{t("nav.method")}</Link>
           <Link href="/wallet-review" className="hide-sm">{t("nav.wallet")}</Link>
+          <Link href="/markets" className="hide-sm">Markets</Link>
+          <Link href="/account" className="btn btn-ghost btn-sm">Sign in</Link>
           <Link href="/#analyze" className="btn btn-ghost btn-sm">{t("nav.analyze")}</Link>
           <div className="language-toggle" role="group" aria-label={t("language.label")}>
             <button type="button" aria-pressed={language === "en"} onClick={() => setLanguage("en")}>EN</button>

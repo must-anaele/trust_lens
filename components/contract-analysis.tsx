@@ -172,16 +172,14 @@ function Results({ data }: { data: AnalyzeResult }) {
       </div>
 
       {alsoFoundOn && alsoFoundOn.length > 0 && (
-        <p className="mut" style={{ margin: "10px 2px 0", fontSize: 13 }}>
+        <div className="mut" style={{ margin: "10px 2px 0", fontSize: 13 }}>
           {t("result.alsoFound")}{" "}
           {alsoFoundOn.map((c) => c.shortName).join(", ")} {t("result.covers")}{" "}
           {facts.chain.shortName}.
-        </p>
+        </div>
       )}
 
-      <ReconCard assessment={assessment} />
-
-      <div className="grid2">
+      <div className="result-grid">
         <FactsCard facts={facts} powers={powers} />
         <WatchtowerFeed
           alerts={alerts}
@@ -252,9 +250,11 @@ function ReconCard({
 function FactsCard({ facts, powers }: { facts: Facts; powers: Powers }) {
   const { t } = useLanguage();
   const ownerOk = facts.owner.endsWith("0".repeat(40));
-  const detected = powers.present.length
-    ? powers.present.join(", ")
-    : "none detected";
+  const detected =
+    [
+      ...powers.present,
+      ...(!powers.bytecode_scan_complete ? [t("result.scanIncomplete")] : []),
+    ].join(", ") || "none detected";
   const isErc20 = facts.standard === "erc20";
   const supply =
     isErc20 && facts.total_supply != null
@@ -304,7 +304,10 @@ function FactsCard({ facts, powers }: { facts: Facts; powers: Powers }) {
     [
       t("result.privileges"),
       detected,
-      powers.present.filter((p) => p !== "pause").length ? "warn" : "ok",
+      !powers.bytecode_scan_complete ||
+      powers.present.filter((p) => p !== "pause").length
+        ? "warn"
+        : "ok",
     ],
     [
       t("result.paused"),

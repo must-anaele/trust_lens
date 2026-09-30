@@ -13,6 +13,11 @@ allowances, ERC-721 token approvals, and ERC-721/ERC-1155 operator approvals usi
 It does not request identity/KYC data, connect a wallet, or sign transactions. The approval review
 is limited to the latest 50,000 blocks and supported event patterns; it is not a full wallet audit.
 
+The **Market Watchlist** MVP lives at `/markets`. It provides paginated CoinMarketCap listings,
+recently listed assets, descriptive 24-hour movers, account-synced favorites, and user-created price
+or 24-hour change alerts. Alerts appear in the app after the scheduled checker detects a threshold
+crossing. Discovery signals are descriptive and are not buy/sell advice.
+
 The app now includes a staff **Trust Operations** console at `/admin/login`. Authorized reviewers can
 scan a SUT/MSQ candidate contract on a chosen supported chain, save the evidence as a private review,
 record a human decision, and publish an unguessable read-only report link. Approved reviews can be
@@ -46,6 +51,12 @@ Server route (app/api/analyze/route.ts)   ← the Anthropic API key stays server
 | `app/api/wallet-review/route.ts` | Consent-gated, chain-specific public wallet-approval scan |
 | `app/admin/page.tsx` | Staff review console: project profiles, analysis queue, decisions, publication and monitor events |
 | `app/api/cron/monitor/route.ts` | Secret-protected scheduled contract-state comparison for approved reviews |
+| `app/markets/page.tsx` | Token market, discovery, watchlist, and alert dashboard |
+| `app/account/page.tsx` | Supabase email/password account sign-in and registration |
+| `app/api/cron/price-alerts/route.ts` | Secret-protected scheduled price-alert evaluation |
+| `lib/market-data.ts` | Server-only CoinMarketCap listings and quote client |
+| `lib/user-auth.ts` | Supabase Auth session cookies and verified user lookup |
+| `supabase/migrations/202609290001_market_watchlist_alerts.sql` | Synced watchlists and price-alert storage |
 | `lib/review-store.ts` | Server-only Supabase PostgREST persistence for reviews and monitor records |
 | `lib/admin-auth.ts` | Signed, HTTP-only, eight-hour admin session |
 | `lib/trust-assets.ts` | SUT/MSQ candidate profile registry with explicit reference status |
@@ -93,7 +104,7 @@ approved migration workflow. Set these server environment variables from `.env.e
 
 - `TRUSTLENS_ADMIN_PASSWORD`: unique staff password (minimum 16 characters).
 - `TRUSTLENS_ADMIN_SESSION_SECRET`: independent random secret (minimum 32 characters).
-- `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`: server-side database access. Never expose the
+- `SUPABASE_URL` and `SUPABASE_SECRET_KEY`: server-side database access. Never expose the
   service-role key to browser code or commit it.
 - `TRUSTLENS_MONITOR_CRON_SECRET`: independent random secret used by the scheduler.
 
@@ -106,6 +117,27 @@ Schedule a POST to `/api/cron/monitor` with `Authorization: Bearer <TRUSTLENS_MO
 Each run checks up to 10 least-recently-monitored approved contracts and saves changes to the admin
 console. The route does not send email or chat notifications yet. Monitoring begins only after an
 approved human review has been saved.
+
+## Market Watchlist setup
+
+Apply `supabase/migrations/202609290001_market_watchlist_alerts.sql` in the same Supabase project.
+Set `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, and `SUPABASE_SECRET_KEY` on the server, plus
+`COINMARKETCAP_API_KEY` and a separate random `TRUSTLENS_ALERT_CRON_SECRET`. Never expose these as
+`NEXT_PUBLIC_` values. Enable email confirmation and configure the allowed site and redirect URLs in
+Supabase Auth before launch. Access and refresh tokens are stored in HTTP-only cookies; watchlist and
+alert tables are not directly accessible to browser clients.
+
+Market listings are paginated in batches of 100. The recent listings tab uses CoinMarketCap's
+Listings New endpoint, which currently requires a Startup or higher API plan; confirm your account's
+access and current data licensing terms. If that plan is unavailable, the endpoint reports its
+provider error while market listings and watchlists remain available. Market responses are cached
+server-side for about one minute. Check current CMC credit usage and redistribution terms for the
+intended production use.
+
+Schedule a POST to `/api/cron/price-alerts` every five minutes with
+`Authorization: Bearer <TRUSTLENS_ALERT_CRON_SECRET>`. The route evaluates up to 500 active alerts
+and saves in-app notifications. It does not send email, SMS, or push notifications. Apply deployment
+rate limits to public routes before public launch.
 
 The console asks reviewers to confirm the address and network against approved company records.
 The seeded SUT address comes from an October 2024 public audit and is not treated as current

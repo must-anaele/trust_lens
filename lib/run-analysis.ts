@@ -22,7 +22,7 @@ export async function runContractAnalysis(address: string, requestedChainId?: nu
 
   const { config, chain, standard } = detection.chosen;
   const facts = await collectFacts(config, chain, standard, address);
-  const powers = await scanPowers(config, standard, address, facts.owner.toLowerCase() === `0x${"0".repeat(40)}`, facts.is_proxy);
+  const powers = await scanPowers(config, standard, address, facts.owner.toLowerCase() === `0x${"0".repeat(40)}`, facts.is_proxy, facts.proxy_implementation);
   const assessment = assess(facts, powers);
   const events = await recentTransfers(config, standard, address, facts.decimals ?? undefined);
 
