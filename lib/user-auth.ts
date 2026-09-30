@@ -4,6 +4,14 @@ const ACCESS_COOKIE = "trustlens_access";
 const REFRESH_COOKIE = "trustlens_refresh";
 const COOKIE_AGE = 60 * 60 * 24 * 30;
 
+export type AuthUser = {
+  id: string;
+  email?: string;
+  created_at?: string;
+  last_sign_in_at?: string;
+  user_metadata?: { full_name?: string; name?: string; first_name?: string; last_name?: string; phone?: string; address?: string; country?: string };
+};
+
 function config() {
   const url = process.env.SUPABASE_URL?.replace(/\/+$/, "");
   const key = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY;
@@ -36,7 +44,7 @@ export async function authRequest(path: string, body: unknown) {
     const message = typeof data.msg === "string" ? data.msg : typeof data.message === "string" ? data.message : "Sign-in request failed.";
     throw new Error(message);
   }
-  return data as { access_token?: string; refresh_token?: string; expires_in?: number; user?: { id: string; email?: string } };
+  return data as { access_token?: string; refresh_token?: string; expires_in?: number; user?: AuthUser };
 }
 
 async function resolveUser(accessToken: string) {
@@ -45,7 +53,7 @@ async function resolveUser(accessToken: string) {
     headers: { apikey: key, Authorization: `Bearer ${accessToken}` }, cache: "no-store",
   });
   if (!response.ok) return null;
-  return await response.json() as { id: string; email?: string };
+  return await response.json() as AuthUser;
 }
 
 export async function requireUser(request: NextRequest, response: NextResponse) {

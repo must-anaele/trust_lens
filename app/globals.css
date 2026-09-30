@@ -70,6 +70,19 @@ code, .mono { font-family: var(--font-mono), ui-monospace, Menlo, monospace; }
 .nav-links, .nav-actions { display: flex; align-items: center; }
 .nav-links { gap: 22px; }
 .nav-actions { gap: 10px; }
+.nav-auth-loading, .mobile-nav-loading { color: var(--tx-3); font-size: 12px; white-space: nowrap; }
+.user-menu { position: relative; }
+.user-menu > summary { display: flex; align-items: center; gap: 8px; list-style: none; cursor: pointer; }
+.user-menu > summary::-webkit-details-marker { display: none; }
+.user-avatar { width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid rgba(38,211,166,.5); border-radius: 50%; background: var(--grad-soft); color: var(--acc-2); font-size: 12px; font-weight: 800; letter-spacing: .04em; }
+.user-menu-panel { position: absolute; z-index: 70; top: calc(100% + 12px); right: 0; width: 280px; padding: 18px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--line-2); border-radius: 14px; background: var(--panel); box-shadow: var(--shadow); }
+.user-menu-panel > strong { color: var(--tx); font-size: 15px; }
+.user-menu-email { overflow-wrap: anywhere; color: var(--tx-3); font-size: 12px; }
+.user-menu-panel dl { display: grid; gap: 10px; margin: 8px 0; padding: 12px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.user-menu-panel dl div { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; }
+.user-menu-panel dt { color: var(--tx-3); }
+.user-menu-panel dd { margin: 0; color: var(--tx-2); text-align: right; }
+.user-menu-panel > a, .user-menu-panel > button { padding: 7px 0; border: 0; background: none; color: var(--acc-2); font: inherit; text-align: left; cursor: pointer; }
 .mobile-nav { display: none; }
 .language-toggle { display: inline-flex; align-items: center; gap: 7px; padding: 4px 8px; border: 1px solid var(--line-2); border-radius: 999px; color: var(--tx-3); font-size: 11px; white-space: nowrap; }
 .language-toggle button { padding: 2px; border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; }
@@ -85,6 +98,9 @@ code, .mono { font-family: var(--font-mono), ui-monospace, Menlo, monospace; }
 .mobile-nav > nav a { padding: 10px 12px; border-radius: 8px; }
 .mobile-nav > nav a:hover { background: var(--panel-2); }
 .mobile-nav > nav .mobile-nav-cta { margin-top: 4px; background: var(--grad); color: #051018; font-weight: 700; }
+.mobile-nav > nav .user-menu-mobile { margin: 4px 10px; }
+.mobile-nav > nav .user-menu-mobile > summary { padding: 0; border: 0; color: var(--tx); }
+.mobile-nav > nav .user-menu-mobile .user-menu-panel { position: static; width: 100%; margin-top: 8px; padding: 12px; box-shadow: none; }
 .mobile-nav > nav .language-toggle { align-self: flex-start; margin: 8px 10px 4px; }
 @media (max-width: 880px) {
   .hdr .desktop-nav { gap: 14px; }
@@ -321,8 +337,15 @@ code, .mono { font-family: var(--font-mono), ui-monospace, Menlo, monospace; }
 .account-card { width: min(480px, 100%); padding: 30px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); box-shadow: var(--shadow); }
 .account-card h1 { margin: 0 0 8px; font-size: 28px; line-height: 1.2; }.account-card > .mut { margin: 0 0 22px; font-size: 13px; }
 .account-form { margin: 20px 0 12px; }.account-form .btn { align-self: flex-start; }.account-message { padding: 10px 12px; background: rgba(47,208,138,.08); border: 1px solid rgba(47,208,138,.2); border-radius: 8px; color: var(--grn); font-size: 12px; }
+.signup-name-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .account-foot { margin: 23px 0 0; border-top: 1px solid var(--line); padding-top: 13px; color: var(--tx-3); font-size: 10px; }
 .account-actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 20px; }
+.account-profile-details { display: grid; gap: 0; margin-top: 24px; border: 1px solid var(--line-2); border-radius: 12px; overflow: hidden; }
+.account-profile-details > div { display: flex; justify-content: space-between; gap: 16px; padding: 13px 16px; border-bottom: 1px solid var(--line); }
+.account-profile-details > div:last-child { border-bottom: 0; }
+.account-profile-details span { color: var(--tx-3); }
+.account-profile-details strong { color: var(--tx-2); text-align: right; overflow-wrap: anywhere; }
+.protected-loading { min-height: 50vh; display: grid; place-items: center; color: var(--tx-2); }
 @media (max-width: 800px) { .markets-heading { align-items: flex-start; flex-direction: column; }.market-account { white-space: normal; }.market-insights { grid-template-columns: 1fr; gap: 8px; }.insight-card { min-height: 86px; }.alerts-layout { grid-template-columns: 1fr; } }
 @media (max-width: 640px) { .market-toolbar { align-items: stretch; flex-direction: column; gap: 6px; padding-top: 9px; }.market-tabs { gap: 15px; }.market-search { flex: none; width: 100%; }.market-title { align-items: flex-start; flex-direction: column; gap: 8px; }.signin-banner { flex-direction: column; }.account-card { padding: 23px; } }
 
