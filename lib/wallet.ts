@@ -5,6 +5,8 @@ const APPROVAL_FOR_ALL = "0x17307eab39ab6107e8899845ad3d59bd9653f200f220920489ca
 const HISTORY_BLOCKS = 50_000;
 const CHUNK_SIZE = 5_000;
 const MAX_LOGS = 500;
+const RPC_CONCURRENCY = 4;
+const STATE_READ_CONCURRENCY = 8;
 
 export interface WalletApproval {
   kind: "token allowance" | "NFT token approval" | "NFT operator approval";
@@ -53,10 +55,22 @@ function formatNativeBalance(raw: string) {
   return fraction ? `${whole.toLocaleString()}.${fraction}` : whole.toLocaleString();
 }
 
-async function getLogs(config: ChainConfig, filter: Record<string, unknown>) {
-  const head = Number(BigInt(await rpc(config.rpcs, "eth_blockNumber", [])));
+async function mapConcurrent<T, R>(items: T[], concurrency: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let next = 0;
+  async function worker() {
+    while (true) {
+      const index = next++;
+      if (index >= items.length) return;
+      results[index] = await fn(items[index]);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, () => worker()));
+  return results;
+}
+
+async function getLogs(config: ChainConfig, head: number, filter: Record<string, unknown>) {
   const from = Math.max(0, head - HISTORY_BLOCKS + 1);
-  const logs: any[] = [];
 
   async function getLogRange(start: number, end: number, depth = 0): Promise<any[]> {
     try {
@@ -71,27 +85,28 @@ async function getLogs(config: ChainConfig, filter: Record<string, unknown>) {
       const rangeLimit = /range.*(?:block|limit)|(?:block|range).*(?:limit|exceed|over)|10,?000 blocks/i.test(message);
       if (!rangeLimit || start >= end || depth >= 12) throw error;
       const middle = Math.floor((start + end) / 2);
-      const earlier = await getLogRange(start, middle, depth + 1);
-      const later = await getLogRange(middle + 1, end, depth + 1);
+      const [earlier, later] = await Promise.all([
+        getLogRange(start, middle, depth + 1),
+        getLogRange(middle + 1, end, depth + 1),
+      ]);
       return earlier.concat(later);
     }
   }
 
-  for (let start = from; start <= head; start += CHUNK_SIZE) {
-    const end = Math.min(head, start + CHUNK_SIZE - 1);
-    logs.push(...await getLogRange(start, end));
-    if (logs.length > MAX_LOGS) {
-      throw new Error("Too many approval events in this scan window. Narrow the review to a smaller period or try again later.");
-    }
-  }
+  const ranges: Array<[number, number]> = [];
+  for (let start = from; start <= head; start += CHUNK_SIZE) ranges.push([start, Math.min(head, start + CHUNK_SIZE - 1)]);
+  const batches = await mapConcurrent(ranges, RPC_CONCURRENCY, ([start, end]) => getLogRange(start, end));
+  const logs = batches.flat();
+  if (logs.length > MAX_LOGS) throw new Error("Too many approval events in this scan window. Narrow the review to a smaller period or try again later.");
   return { head, from, logs };
 }
 
 export async function reviewWallet(config: ChainConfig, address: string): Promise<WalletReview> {
   const ownerTopic = topicAddress(address);
+  const head = Number(BigInt(await rpc(config.rpcs, "eth_blockNumber", [])));
   const [allowanceLogs, operatorLogs, nativeBalance, accountNonce, code] = await Promise.all([
-    getLogs(config, { topics: [APPROVAL, ownerTopic] }),
-    getLogs(config, { topics: [APPROVAL_FOR_ALL, ownerTopic] }),
+    getLogs(config, head, { topics: [APPROVAL, ownerTopic] }),
+    getLogs(config, head, { topics: [APPROVAL_FOR_ALL, ownerTopic] }),
     rpc(config.rpcs, "eth_getBalance", [address, "latest"]),
     rpc(config.rpcs, "eth_getTransactionCount", [address, "latest"]),
     rpc(config.rpcs, "eth_getCode", [address, "latest"]),
@@ -108,36 +123,36 @@ export async function reviewWallet(config: ChainConfig, address: string): Promis
     if (!prior || BigInt(log.blockNumber) > BigInt(prior.blockNumber)) latestAllowanceLog.set(key, log);
   }
 
-  for (const log of latestAllowanceLog.values()) {
+  const allowanceApprovals = await mapConcurrent<any, WalletApproval | null>([...latestAllowanceLog.values()], STATE_READ_CONCURRENCY, async (log) => {
     const contract = String(log.address).toLowerCase();
     const spender = readAddress(log.topics[2]);
     const result = await ethCall(config.rpcs, contract,
       `0xdd62ed3e${ownerTopic.slice(2)}${topicAddress(spender).slice(2)}`);
     const allowance = asBigInt(result);
     if (allowance !== null) {
-      approvals.push({
+      return {
         kind: "token allowance", contract, spender, amount: displayAmount(allowance),
         tokenId: null, active: allowance > 0n,
         evidence: "Current ERC-20 allowance() value read from the selected chain.",
-      });
-      continue;
+      } satisfies WalletApproval;
     }
 
     // ERC-721 indexes tokenId as topic[3]; ERC-20 stores allowance in data.
     const tokenId = asBigInt(log.topics[3] ?? null);
-    if (tokenId === null) continue;
+    if (tokenId === null) return null;
     const approved = await ethCall(config.rpcs, contract,
       `0x081812fc${tokenId.toString(16).padStart(64, "0")}`);
     const approvedAddress = approved && approved.length >= 42 ? `0x${approved.slice(-40)}`.toLowerCase() : null;
-    approvals.push({
+    return {
       kind: "NFT token approval", contract, spender, amount: null,
       tokenId: tokenId.toString(),
       active: approvedAddress === spender.toLowerCase(),
       evidence: approvedAddress === null
         ? "An Approval event was found, but current token approval could not be confirmed."
         : "Current getApproved(tokenId) value compared with the event spender.",
-    });
-  }
+    } satisfies WalletApproval;
+  });
+  approvals.push(...allowanceApprovals.filter((approval): approval is WalletApproval => approval !== null));
 
   const latestOperatorLog = new Map<string, any>();
   for (const log of operatorLogs.logs) {
@@ -147,20 +162,21 @@ export async function reviewWallet(config: ChainConfig, address: string): Promis
     const prior = latestOperatorLog.get(key);
     if (!prior || BigInt(log.blockNumber) > BigInt(prior.blockNumber)) latestOperatorLog.set(key, log);
   }
-  for (const log of latestOperatorLog.values()) {
+  const operatorApprovals = await mapConcurrent<any, WalletApproval>([...latestOperatorLog.values()], STATE_READ_CONCURRENCY, async (log) => {
     const contract = String(log.address).toLowerCase();
     const operator = readAddress(log.topics[2]);
     const current = await ethCall(config.rpcs, contract,
       `0xe985e9c5${ownerTopic.slice(2)}${topicAddress(operator).slice(2)}`);
     const approved = current === "0x" ? null : asBigInt(current);
-    approvals.push({
+    return {
       kind: "NFT operator approval", contract, spender: operator, amount: null,
       tokenId: null, active: approved === null ? null : approved !== 0n,
       evidence: approved === null
         ? "An ApprovalForAll event was found, but current operator approval could not be confirmed."
         : "Current isApprovedForAll(owner, operator) value read from the selected chain.",
-    });
-  }
+    } satisfies WalletApproval;
+  });
+  approvals.push(...operatorApprovals);
 
   approvals.sort((a, b) => Number(b.active === true) - Number(a.active === true));
   const blocksScanned = Math.min(allowanceLogs.head, operatorLogs.head) -
