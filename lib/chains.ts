@@ -38,7 +38,7 @@ export const CHAINS: ChainConfig[] = [
       "https://eth.llamarpc.com",
     ],
     explorer: "https://etherscan.io",
-    nativeSymbol: "ETH",
+    nativeSymbol: "ETH", 
   },
   {
     id: 8453,
