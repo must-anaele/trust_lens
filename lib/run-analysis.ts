@@ -8,7 +8,7 @@ export class AnalysisError extends Error {
   constructor(message: string, readonly status: number) { super(message); }
 }
 
-export async function runContractAnalysis(address: string, requestedChainId?: number, language: "en" | "ko" = "en", source?: string): Promise<AnalyzeResult> {
+export async function runContractAnalysis(address: string, requestedChainId?: number, language: "en" | "ko" | "fr" = "en", source?: string): Promise<AnalyzeResult> {
   const detection = await detectAddress(address, requestedChainId);
   if (!detection.chosen) {
     if (!detection.reachable) throw new AnalysisError("Couldn't reach the selected supported chain to verify this address. Please try again in a moment.", 502);

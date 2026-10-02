@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { MarketCoin } from "@/lib/market-data";
+import { useLanguage } from "@/components/language-provider";
 
 type Favorite = { cmc_id: number; created_at: string };
 type Alert = { id: string; cmc_id: number; condition: string; threshold: number; is_active: boolean };
@@ -14,6 +15,7 @@ const compactCurrency = new Intl.NumberFormat("en-US", { style: "currency", curr
 const conditionLabel: Record<string, string> = { price_above: "Price rises above", price_below: "Price falls below", change_above: "24h change exceeds", change_below: "24h change falls below −" };
 
 export function MarketDashboard() {
+  const { language, t } = useLanguage();
   const [tab, setTab] = useState<Tab>("market");
   const [coins, setCoins] = useState<MarketCoin[]>([]);
   const [latest, setLatest] = useState<MarketCoin[]>([]);
@@ -104,11 +106,11 @@ export function MarketDashboard() {
     await loadAccount();
   }
 
-  const tabs: Array<[Tab, string]> = [["market", "Top market"], ["movers", "Top movers"], ["latest", "Recently listed"], ["watchlist", "My watchlist"], ["alerts", "Alerts"]];
+  const tabs: Array<[Tab, string]> = [["market", language === "fr" ? "Principaux marchés" : "Top market"], ["movers", language === "fr" ? "Meilleures variations" : "Top movers"], ["latest", language === "fr" ? "Récemment listés" : "Recently listed"], ["watchlist", language === "fr" ? "Ma liste de suivi" : "My watchlist"], ["alerts", language === "fr" ? "Alertes" : "Alerts"]];
   return <>
     <section className="markets-heading">
-      <div><p className="section-kicker">Market discovery</p><h1>Track the market. <span className="grad">Keep your own watch.</span></h1><p className="mut">Explore market metrics, save favorites across devices, and set threshold alerts.</p></div>
-      <div className="market-account"><span className="freshness-dot" /> Market data · updated about every minute <Link href={signedIn ? "/account" : "/account"}>{signedIn ? "Account" : "Sign in"}</Link></div>
+      <div><p className="section-kicker">{language === "fr" ? "Découverte des marchés" : "Market discovery"}</p><h1>{language === "fr" ? "Suivez le marché." : "Track the market."} <span className="grad">{language === "fr" ? "Gardez un œil sur vos actifs." : "Keep your own watch."}</span></h1><p className="mut">{language === "fr" ? "Explorez les indicateurs du marché, enregistrez vos favoris sur tous vos appareils et définissez des alertes de seuil." : "Explore market metrics, save favorites across devices, and set threshold alerts."}</p></div>
+      <div className="market-account"><span className="freshness-dot" /> {language === "fr" ? "Données du marché · actualisées environ chaque minute" : "Market data · updated about every minute"} <Link href="/account">{signedIn ? t("nav.account") : t("nav.signin")}</Link></div>
     </section>
     <section className="market-insights" aria-label="Market discovery lists">
       <button className={`insight-card ${tab === "movers" ? "selected" : ""}`} onClick={() => setTab("movers")}><span>TOP MOVERS</span><strong>{coins[0]?.symbol ?? "—"}</strong><small>Ranked by 24h change in the loaded market list</small></button>
@@ -117,11 +119,11 @@ export function MarketDashboard() {
     </section>
     <section className="market-panel">
       <div className="market-toolbar"><div className="market-tabs">{tabs.map(([id, label]) => <button key={id} className={tab === id ? "active" : ""} onClick={() => setTab(id)}>{label}{id === "alerts" && events.length > 0 ? ` (${events.length})` : ""}</button>)}</div>
-        {tab !== "alerts" && <input className="input market-search" placeholder="Search name or ticker" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search tokens" />}</div>
+        {tab !== "alerts" && <input className="input market-search" placeholder={language === "fr" ? "Rechercher un nom ou un symbole" : "Search name or ticker"} value={query} onChange={(e) => setQuery(e.target.value)} aria-label={language === "fr" ? "Rechercher des jetons" : "Search tokens"} />}</div>
       {error && <p className="err market-error" role="alert">{error}</p>}
       {tab === "alerts" ? <div className="alerts-layout">
-        <div><h2>Active thresholds</h2>{!signedIn ? <p className="mut">Sign in to create and sync alerts. <Link href="/account">Sign in →</Link></p> : alerts.length === 0 ? <p className="mut">No alerts yet. Add one from any token row.</p> : <div className="alert-list">{alerts.map((alert) => { const coin = coinById.get(alert.cmc_id); return <div className="alert-row" key={alert.id}><div><b>{coin?.name ?? `CMC #${alert.cmc_id}`}</b><p>{conditionLabel[alert.condition]} {alert.condition.startsWith("price_") ? currency.format(alert.threshold) : `${alert.threshold}%`}</p></div><button className="linkbtn" onClick={() => removeAlert(alert.id)}>Remove</button></div>; })}</div>}</div>
-        <div><h2>Recent notifications</h2>{events.length === 0 ? <p className="mut">Alert notifications will appear here after the scheduled checker detects a threshold crossing.</p> : <div className="alert-list">{events.map((item) => <div className="alert-row" key={item.id}><div><b>{coinById.get(item.cmc_id)?.name ?? `CMC #${item.cmc_id}`}</b><p>{conditionLabel[item.condition]} · observed {item.condition.startsWith("price_") ? currency.format(item.observed_value) : `${item.observed_value.toFixed(2)}%`}</p></div><time>{new Date(item.created_at).toLocaleString()}</time></div>)}</div>}</div>
+        <div><h2>{language === "fr" ? "Seuils actifs" : "Active thresholds"}</h2>{!signedIn ? <p className="mut">{language === "fr" ? "Connectez-vous pour créer et synchroniser des alertes." : "Sign in to create and sync alerts."} <Link href="/account">{t("nav.signin")} →</Link></p> : alerts.length === 0 ? <p className="mut">{language === "fr" ? "Aucune alerte. Ajoutez-en une depuis une ligne de jeton." : "No alerts yet. Add one from any token row."}</p> : <div className="alert-list">{alerts.map((alert) => { const coin = coinById.get(alert.cmc_id); return <div className="alert-row" key={alert.id}><div><b>{coin?.name ?? `CMC #${alert.cmc_id}`}</b><p>{conditionLabel[alert.condition]} {alert.condition.startsWith("price_") ? currency.format(alert.threshold) : `${alert.threshold}%`}</p></div><button className="linkbtn" onClick={() => removeAlert(alert.id)}>{language === "fr" ? "Supprimer" : "Remove"}</button></div>; })}</div>}</div>
+        <div><h2>{language === "fr" ? "Notifications récentes" : "Recent notifications"}</h2>{events.length === 0 ? <p className="mut">{language === "fr" ? "Les notifications apparaîtront ici lorsque le vérificateur détectera un franchissement de seuil." : "Alert notifications will appear here after the scheduled checker detects a threshold crossing."}</p> : <div className="alert-list">{events.map((item) => <div className="alert-row" key={item.id}><div><b>{coinById.get(item.cmc_id)?.name ?? `CMC #${item.cmc_id}`}</b><p>{conditionLabel[item.condition]} · {language === "fr" ? "valeur observée" : "observed"} {item.condition.startsWith("price_") ? currency.format(item.observed_value) : `${item.observed_value.toFixed(2)}%`}</p></div><time>{new Date(item.created_at).toLocaleString()}</time></div>)}</div>}</div>
       </div> : <>
         <div className="market-title"><div><h2>{tabs.find(([id]) => id === tab)?.[1]}</h2><p className="mut">{tab === "movers" ? `Largest positive 24-hour changes among assets ${pageStart}–${pageStart + 99} by market capitalization.` : tab === "latest" ? "Recently added assets listed by CoinMarketCap. Listing order is not a quality signal." : tab === "watchlist" ? "Your account-synced favorites." : `Assets ${pageStart}–${pageStart + 99}, ranked by market capitalization.`}</p></div><span className="mut">{filtered.length} assets</span></div>
         {tab === "watchlist" && !signedIn && <div className="signin-banner">Sign in to save favorites and sync them across your devices. <Link href="/account">Sign in or create account →</Link></div>}

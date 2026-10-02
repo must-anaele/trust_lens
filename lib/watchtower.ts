@@ -16,14 +16,15 @@ const VERDICT_SCHEMA = {
   additionalProperties: false,
 } as const;
 
-function buildSystem(standard: Standard, chainName: string, language: "en" | "ko"): string {
+type Language = "en" | "ko" | "fr";
+function buildSystem(standard: Standard, chainName: string, language: Language): string {
   const nft = standard !== "erc20";
   return `You are the TrustLens Watchtower. Classify a single on-chain event on a ${SPECS[standard].label} \
 on ${chainName} by how much it threatens holder trust, then write a short human alert. \
 ${nft
     ? "Mint/reveal of new NFTs, metadata/royalty changes, and high-value token transfers matter most."
     : "Owner/mint/pause/fee/blacklist changes and large treasury movements matter most."} \
-Calm and specific — no alarmism, no false reassurance. ${language === "ko" ? "Write the headline, explanation, and recommended action in natural Korean. Keep technical identifiers unchanged." : "Write the headline, explanation, and recommended action in English."}`;
+  Calm and specific — no alarmism, no false reassurance. ${language === "ko" ? "Write the headline, explanation, and recommended action in natural Korean. Keep technical identifiers unchanged." : language === "fr" ? "Rédigez le titre, l’explication et l’action recommandée en français naturel. Conservez les identifiants techniques." : "Write the headline, explanation, and recommended action in English."}`;
 }
 
 export async function classifyEvent(
@@ -31,7 +32,7 @@ export async function classifyEvent(
   standard: Standard,
   chainName: string,
   supply?: number | null,
-  language: "en" | "ko" = "en",
+  language: Language = "en",
 ): Promise<Verdict> {
   const ctx = supply ? `\nToken total supply for context: ${supply}` : "";
   const text = await generateText({

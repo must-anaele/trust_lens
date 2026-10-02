@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
 
   const address = typeof body.address === "string" ? body.address.trim() : "";
   const source = typeof body.source === "string" ? body.source : undefined;
-  const language = body.language === "ko" ? "ko" : "en";
+  const language = body.language === "ko" || body.language === "fr" ? body.language : "en";
   const requestedChainId = body.chainId === undefined ? undefined : Number(body.chainId);
   if (!/^0x[0-9a-fA-F]{40}$/.test(address)) return NextResponse.json({ error: "Enter a valid contract address (0x + 40 hex chars)." }, { status: 400 });
   if (source && source.length > 60_000) return NextResponse.json({ error: "Verified source must be 60,000 characters or fewer." }, { status: 413 });

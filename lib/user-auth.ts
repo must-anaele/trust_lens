@@ -9,7 +9,7 @@ export type AuthUser = {
   email?: string;
   created_at?: string;
   last_sign_in_at?: string;
-  user_metadata?: { full_name?: string; name?: string; first_name?: string; last_name?: string; phone?: string; address?: string; country?: string };
+  user_metadata?: { full_name?: string; name?: string; first_name?: string; last_name?: string; firstName?: string; lastName?: string; phone?: string; phone_number?: string; address?: string; street_address?: string; country?: string; country_name?: string };
 };
 
 function config() {

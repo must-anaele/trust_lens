@@ -3,13 +3,14 @@ import type { Facts } from "./types";
 import { SPECS } from "./standards";
 import { generateText } from "./anthropic-client";
 
-function buildSystem(facts: Facts, language: "en" | "ko"): string {
+type Language = "en" | "ko" | "fr";
+function buildSystem(facts: Facts, language: Language): string {
   const spec = SPECS[facts.standard];
   const nft = facts.standard !== "erc20";
   return `You are TrustLens, a smart-contract trust auditor for ${spec.label}s on ${facts.chain.name}. \
 Turn raw on-chain facts, third-party scanner claims, and (when available) verified Solidity source \
 into a short, plain-language Trust Report a non-engineer can act on.
-${language === "ko" ? "Write the entire report in natural Korean. Keep technical identifiers, function names, standards, and addresses unchanged." : "Write the entire report in English."}
+${language === "ko" ? "Write the entire report in natural Korean. Keep technical identifiers, function names, standards, and addresses unchanged." : language === "fr" ? "Rédigez l’intégralité du rapport en français naturel. Conservez les identifiants techniques, noms de fonctions, standards et adresses." : "Write the entire report in English."}
 
 Hard rules:
 - Separate VERIFIED on-chain facts from UNVERIFIED third-party claims. Never present a scanner claim as fact.
@@ -20,7 +21,7 @@ Hard rules:
 ${nft ? "- For NFTs: focus on mint controls, metadata mutability, and royalties — not token supply or fees." : ""}`;
 }
 
-function buildPrompt(facts: Facts, claims: string[], source?: string, language: "en" | "ko" = "en"): string {
+function buildPrompt(facts: Facts, claims: string[], source?: string, language: Language = "en"): string {
   const nft = facts.standard !== "erc20";
   return `Produce a Trust Report for this ${SPECS[facts.standard].label} on ${facts.chain.name}.
 
@@ -33,7 +34,7 @@ ${claims.length ? claims.map((c) => `- ${c}`).join("\n") : "- (none)"}
 ## Verified Solidity source
 ${source ? source.slice(0, 60000) : "(NOT PROVIDED — verified source not yet fetched)"}
 
-${language === "ko" ? "Write all headings and explanations in Korean, while preserving technical terms and quoted evidence." : "Write all headings and explanations in English."}
+${language === "ko" ? "Write all headings and explanations in Korean, while preserving technical terms and quoted evidence." : language === "fr" ? "Rédigez tous les titres et explications en français, en conservant les termes techniques et les preuves citées." : "Write all headings and explanations in English."}
 
 Sections:
 1. **Verdict** — one line, plain English.
@@ -48,7 +49,7 @@ export async function audit(
   facts: Facts,
   claims: string[],
   source?: string,
-  language: "en" | "ko" = "en",
+  language: Language = "en",
 ): Promise<string> {
   return generateText({
     instructions: buildSystem(facts, language),
